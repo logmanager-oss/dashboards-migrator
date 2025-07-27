@@ -43,8 +43,8 @@ func CLIStart() error {
 		return fmt.Errorf("creating output file: '%s' failed: %v", config.OutputPath, err)
 	}
 
-	defer outputWriter.Flush()
 	defer outputWriter.Close()
+	defer outputWriter.Flush()
 
 	for _, savedObject := range lm4dashboard {
 		rawSavedObject, err := json.Marshal(savedObject)
