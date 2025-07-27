@@ -47,20 +47,22 @@ type Query struct {
 }
 
 type PanelJSON struct {
-	Version  string `json:"version"`
-	GridData struct {
-		X int    `json:"x"`
-		Y int    `json:"y"`
-		W int    `json:"w"`
-		H int    `json:"h"`
-		I string `json:"i"`
-	} `json:"gridData"`
-	PanelIndex       string `json:"panelIndex"`
+	Version          string   `json:"version"`
+	GridData         GridData `json:"gridData"`
+	PanelIndex       string   `json:"panelIndex"`
 	EmbeddableConfig struct {
 		HidePanelTitles bool `json:"hidePanelTitles"`
 	} `json:"embeddableConfig"`
 	Title        string `json:"title"`
 	PanelRefName string `json:"panelRefName"`
+}
+
+type GridData struct {
+	X int    `json:"x"`
+	Y int    `json:"y"`
+	W int    `json:"w"`
+	H int    `json:"h"`
+	I string `json:"i"`
 }
 
 type VisState struct {

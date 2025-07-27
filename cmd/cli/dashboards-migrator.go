@@ -7,7 +7,8 @@ import (
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/config"
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator"
-	"github.com/logmanager-oss/dashboards-migrator/internal/objects/lm3"
+	"github.com/logmanager-oss/dashboards-migrator/internal/objects/lm3/lm3objects"
+	"github.com/logmanager-oss/dashboards-migrator/internal/objects/lm4/lm4objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/reader"
 	"github.com/logmanager-oss/dashboards-migrator/internal/writer"
 )
@@ -25,15 +26,14 @@ func CLIStart() error {
 		return fmt.Errorf("reading file: '%s' failed: %v", jsonInput, err)
 	}
 
-	var lm3dashboard lm3.Object
-	err = json.Unmarshal(jsonInput, &lm3dashboard)
+	lm4DashboardObject := lm4objects.NewDashboard()
+	lm3DashboardObject, err := lm3objects.NewDashboard(jsonInput)
 	if err != nil {
-		return fmt.Errorf("unmarshalling input: %v", err)
+		return err
 	}
 
-	migrator := migrator.New()
-
-	lm4dashboard, err := migrator.Migrate(lm3dashboard)
+	migrator := migrator.New(lm4DashboardObject, lm3DashboardObject)
+	lm4dashboard, err := migrator.Migrate()
 	if err != nil {
 		return fmt.Errorf("dashboards migration failed: %v", err)
 	}
