@@ -6,7 +6,7 @@ type SavedObject struct {
 	Attributes       Attributes             `json:"attributes"`
 	ID               string                 `json:"id"`
 	MigrationVersion map[string]interface{} `json:"migrationVersion"`
-	References       []References           `json:"references"`
+	References       []Reference            `json:"references"`
 	Type             string                 `json:"type"`
 	UpdatedAt        time.Time              `json:"updated_at"`
 	Version          string                 `json:"version"`
@@ -14,25 +14,25 @@ type SavedObject struct {
 
 type Attributes struct {
 	Description           string                `json:"description"`
-	Hits                  int                   `json:"hits,omitempty"`
+	Hits                  *int                  `json:"hits,omitempty"`
 	KibanaSavedObjectMeta KibanaSavedObjectMeta `json:"kibanaSavedObjectMeta"`
 	OptionsJSON           string                `json:"optionsJSON,omitempty"`
-	PanelsJSON            []PanelsJSON          `json:"panelsJSON,omitempty"`
-	TimeRestore           bool                  `json:"timeRestore,omitempty"`
+	PanelsJSON            string                `json:"panelsJSON,omitempty"`
+	TimeRestore           *bool                 `json:"timeRestore,omitempty"`
 	Title                 string                `json:"title"`
 	Version               int                   `json:"version"`
-	VisState              VisState              `json:"visState,omitempty"`
+	VisState              string                `json:"visState,omitempty"`
 	UIStateJSON           string                `json:"uiStateJSON,omitempty"`
 }
 
-type References struct {
+type Reference struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
 
 type KibanaSavedObjectMeta struct {
-	SearchSourceJSON SearchSourceJSON
+	SearchSourceJSON string
 }
 
 type SearchSourceJSON struct {
@@ -46,7 +46,7 @@ type Query struct {
 	Query    string `json:"query"`
 }
 
-type PanelsJSON struct {
+type PanelJSON struct {
 	Version  string `json:"version"`
 	GridData struct {
 		X int    `json:"x"`
