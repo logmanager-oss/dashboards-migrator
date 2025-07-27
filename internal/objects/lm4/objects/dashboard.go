@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects/lm4"
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects/lm4/defaults"
 )
