@@ -47,20 +47,22 @@ type Query struct {
 }
 
 type PanelJSON struct {
-	Version  string `json:"version"`
-	GridData struct {
-		X int    `json:"x"`
-		Y int    `json:"y"`
-		W int    `json:"w"`
-		H int    `json:"h"`
-		I string `json:"i"`
-	} `json:"gridData"`
-	PanelIndex       string `json:"panelIndex"`
+	Version          string   `json:"version"`
+	GridData         GridData `json:"gridData"`
+	PanelIndex       string   `json:"panelIndex"`
 	EmbeddableConfig struct {
 		HidePanelTitles bool `json:"hidePanelTitles"`
 	} `json:"embeddableConfig"`
 	Title        string `json:"title"`
 	PanelRefName string `json:"panelRefName"`
+}
+
+type GridData struct {
+	X int    `json:"x"`
+	Y int    `json:"y"`
+	W int    `json:"w"`
+	H int    `json:"h"`
+	I string `json:"i"`
 }
 
 type VisState struct {
@@ -79,14 +81,14 @@ type VisStateAggs struct {
 }
 
 type VisStateAggsParams struct {
-	Field              string `json:"field"`
-	OrderBy            string `json:"orderBy"`
-	Order              string `json:"order"`
-	Size               int    `json:"size"`
-	OtherBucket        bool   `json:"otherBucket"`
-	OtherBucketLabel   string `json:"otherBucketLabel"`
-	MissingBucket      bool   `json:"missingBucket"`
-	MissingBucketLabel string `json:"missingBucketLabel"`
+	Field              string `json:"field,omitempty"`
+	OrderBy            string `json:"orderBy,omitempty"`
+	Order              string `json:"order,omitempty"`
+	Size               int    `json:"size,omitempty"`
+	OtherBucket        bool   `json:"otherBucket,omitempty"`
+	OtherBucketLabel   string `json:"otherBucketLabel,omitempty"`
+	MissingBucket      bool   `json:"missingBucket,omitempty"`
+	MissingBucketLabel string `json:"missingBucketLabel,omitempty"`
 }
 
 type VisStateParams struct {
