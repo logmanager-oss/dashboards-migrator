@@ -32,9 +32,9 @@ func NewLM4Visualisation(title string, lm3filters []lm3.Query, lm3filterIDs []in
 		Title:             title,
 	}
 
-	vis.setFilters(lm3filters, lm3filterIDs)
-	vis.setTitles()
-	vis.setVisualizationConfig(vis.VisualizationType.GetVisualizationConfig(vis.filters))
+	vis.migrateFilters(lm3filters, lm3filterIDs)
+	vis.migrateTitles()
+	vis.migrateVisualizationConfig(vis.VisualizationType.GetVisualizationConfig(vis.filters))
 
 	finalVisualizationObject, err := vis.buildFinalVisualizationObject()
 	if err != nil {
@@ -44,7 +44,7 @@ func NewLM4Visualisation(title string, lm3filters []lm3.Query, lm3filterIDs []in
 	return finalVisualizationObject, nil
 }
 
-func (vis *LM4Visualization) setFilters(lm3filters []lm3.Query, filterIDs []int) {
+func (vis *LM4Visualization) migrateFilters(lm3filters []lm3.Query, filterIDs []int) {
 	for _, lm3filter := range lm3filters {
 		if slices.Contains(filterIDs, lm3filter.ID) {
 			vis.filters = append(vis.filters, lm4.Filter{
@@ -55,11 +55,11 @@ func (vis *LM4Visualization) setFilters(lm3filters []lm3.Query, filterIDs []int)
 	}
 }
 
-func (vis *LM4Visualization) setVisualizationConfig(visStateAggs []lm4.VisStateAggs) {
+func (vis *LM4Visualization) migrateVisualizationConfig(visStateAggs []lm4.VisStateAggs) {
 	vis.VisState.Aggs = visStateAggs
 }
 
-func (vis *LM4Visualization) setTitles() {
+func (vis *LM4Visualization) migrateTitles() {
 	vis.SavedObject.Attributes.Title = vis.Title
 	vis.VisState.Title = vis.Title
 }
