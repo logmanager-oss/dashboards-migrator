@@ -4,7 +4,7 @@ import "github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 
 type EventsOverTime struct{}
 
-func (e *EventsOverTime) GetVisualizationConfig(_ []lm4.Filter) []lm4.VisStateAggs {
+func (e *EventsOverTime) GetVisualizationConfig([]lm4.Filter, string, int) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
 		{
 			ID:      "1",

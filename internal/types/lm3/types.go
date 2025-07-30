@@ -3,19 +3,19 @@ package lm3
 type BaseObject struct {
 	Title    string `json:"title"`
 	Services struct {
-		Query struct {
-			List map[int]Query `json:"list"`
-			IDs  []int         `json:"ids"`
-		} `json:"query"`
-		Filter struct {
+		Filters struct {
 			List map[int]Filter `json:"list"`
 			IDs  []int          `json:"ids"`
+		} `json:"query"`
+		GlobalFilters struct {
+			List map[int]GlobalFilter `json:"list"`
+			IDs  []int                `json:"ids"`
 		} `json:"filter"`
 	} `json:"services"`
 	Rows []Row `json:"rows"`
 }
 
-type Query struct {
+type Filter struct {
 	ID     int    `json:"id"`
 	Type   string `json:"type"`
 	Query  string `json:"query"`
@@ -23,9 +23,12 @@ type Query struct {
 	Color  string `json:"color"`
 	Pin    bool   `json:"pin"`
 	Enable bool   `json:"enable"`
+	Field  string `json:"field"`
+	Size   int    `json:"size"`
+	Union  string `json:"union"`
 }
 
-type Filter struct {
+type GlobalFilter struct {
 	Type    string `json:"type"`
 	Field   string `json:"field"`
 	From    string `json:"from"`

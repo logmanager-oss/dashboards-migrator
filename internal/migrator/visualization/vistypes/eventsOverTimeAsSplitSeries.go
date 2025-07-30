@@ -4,9 +4,9 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
-type EventsOverTimeWithFilters struct{}
+type EventsOverTimeAsSplitSeries struct{}
 
-func (e *EventsOverTimeWithFilters) GetVisualizationConfig(filters []lm4.Filter, _ string, _ int) []lm4.VisStateAggs {
+func (e *EventsOverTimeAsSplitSeries) GetVisualizationConfig(_ []lm4.Filter, field string, size int) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
 		{
 			ID:      "1",
@@ -39,10 +39,17 @@ func (e *EventsOverTimeWithFilters) GetVisualizationConfig(filters []lm4.Filter,
 		{
 			ID:      "3",
 			Enabled: true,
-			Type:    "filters",
+			Type:    "terms",
 			Schema:  "group",
 			Params: lm4.VisStateAggsParams{
-				Filters: filters,
+				Field:              field,
+				OrderBy:            "1",
+				Order:              "desc",
+				Size:               size,
+				OtherBucket:        true,
+				OtherBucketLabel:   "Other",
+				MissingBucket:      false,
+				MissingBucketLabel: "Missing",
 			},
 		},
 	}

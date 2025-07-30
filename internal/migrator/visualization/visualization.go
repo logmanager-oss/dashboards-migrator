@@ -2,7 +2,6 @@ package visualization
 
 import (
 	"encoding/json"
-	"slices"
 
 	"github.com/google/uuid"
 
@@ -20,9 +19,11 @@ type LM4Visualization struct {
 	ID                string
 	Title             string
 	filters           []lm4.Filter
+	field             string
+	size              int
 }
 
-func NewLM4Visualisation(title string, lm3filters []lm3.Query, lm3filterIDs []int, visType vistypes.VisType) (*lm4.SavedObject, error) {
+func NewLM4Visualisation(title string, lm3filters []lm3.Filter, visType vistypes.VisType) (*lm4.SavedObject, error) {
 	vis := &LM4Visualization{
 		SavedObject:       defaults.GetDefaultVisualizationSavedObject(),
 		VisState:          defaults.GetDefaultHistogramVisState(),
@@ -32,9 +33,9 @@ func NewLM4Visualisation(title string, lm3filters []lm3.Query, lm3filterIDs []in
 		Title:             title,
 	}
 
-	vis.migrateFilters(lm3filters, lm3filterIDs)
+	vis.migrateFilters(lm3filters)
 	vis.migrateTitles()
-	vis.migrateVisualizationConfig(vis.VisualizationType.GetVisualizationConfig(vis.filters))
+	vis.migrateVisualizationConfig(vis.VisualizationType.GetVisualizationConfig(vis.filters, vis.field, vis.size))
 
 	finalVisualizationObject, err := vis.buildFinalVisualizationObject()
 	if err != nil {
@@ -44,14 +45,26 @@ func NewLM4Visualisation(title string, lm3filters []lm3.Query, lm3filterIDs []in
 	return finalVisualizationObject, nil
 }
 
-func (vis *LM4Visualization) migrateFilters(lm3filters []lm3.Query, filterIDs []int) {
-	for _, lm3filter := range lm3filters {
-		if slices.Contains(filterIDs, lm3filter.ID) {
-			vis.filters = append(vis.filters, lm4.Filter{
-				Input: map[string]string{"query": lm3filter.Query, "language": "kuery"},
-				Label: "",
-			})
+func (vis *LM4Visualization) migrateFilters(filters []lm3.Filter) {
+	for _, filter := range filters {
+		// is visualisation type is EventsOverTimeWithFilters but one of the filters is topN then skip it - we do not support such visualisation yet
+		if _, ok := vis.VisualizationType.(*vistypes.EventsOverTimeWithFilters); ok {
+			if filter.Type == "topN" {
+				continue
+			}
 		}
+		// is visualisation type is EventsOverTimeAsSplitSeries then we must grab it's field and size to be able to create visualisation config
+		if _, ok := vis.VisualizationType.(*vistypes.EventsOverTimeAsSplitSeries); ok {
+			if filter.Type == "topN" {
+				vis.field = filter.Field
+				vis.size = filter.Size
+			}
+		}
+
+		vis.filters = append(vis.filters, lm4.Filter{
+			Input: map[string]string{"query": filter.Query, "language": "kuery"},
+			Label: "",
+		})
 	}
 }
 

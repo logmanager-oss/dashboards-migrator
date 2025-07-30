@@ -24,15 +24,16 @@ func New(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Dashbo
 func (m *Migrator) Migrate() ([]lm4.SavedObject, error) {
 	for _, row := range m.lm3Dashboard.Rows {
 		for _, panel := range row.Panels {
-			visualisationType, err := m.visualisationTypeDiscovery(&panel)
+			filters := m.lm3Dashboard.GetPanelFilters(&panel)
+
+			visualisationType, err := m.visualisationTypeDiscovery(&panel, filters)
 			if err != nil {
 				return nil, err
 			}
 
 			visualization, err := visualization.NewLM4Visualisation(
 				panel.Title,
-				m.lm3Dashboard.Filters,
-				panel.Queries.IDs,
+				filters,
 				visualisationType,
 			)
 			if err != nil {
