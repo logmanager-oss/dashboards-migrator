@@ -102,4 +102,6 @@ type Panel struct {
 	Derivative   bool     `json:"derivative"`
 	Interval     string   `json:"interval"`
 	Intervals    []string `json:"intervals"`
+	Field        string   `json:"field"`
+	Size         int      `json:"size"`
 }

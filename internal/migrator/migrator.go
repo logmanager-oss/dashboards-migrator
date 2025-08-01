@@ -34,6 +34,8 @@ func (m *Migrator) Migrate() ([]lm4.SavedObject, error) {
 			visualization, err := visualization.NewLM4Visualisation(
 				panel.Title,
 				filters,
+				panel.Field,
+				panel.Size,
 				visualisationType,
 			)
 			if err != nil {

@@ -28,5 +28,20 @@ func (m *Migrator) visualisationTypeDiscovery(panel *lm3.Panel, filters []lm3.Fi
 		}
 	}
 
+	if panel.Type == "terms" {
+		if len(filters) == 1 {
+			// If there is only a single filter and it is *, then it must be Vertical Graph
+			if filters[0].Query == "*" {
+				return &vistypes.VerticalGraph{}, nil
+			}
+			// Otherwise it will be Vertical Graph With Filters
+			return &vistypes.VerticalGraphWithFilters{}, nil
+		}
+		// If there is more then one filter, then it must be Vertical Graph With Filters
+		if len(filters) > 1 {
+			return &vistypes.VerticalGraphWithFilters{}, nil
+		}
+	}
+
 	return nil, fmt.Errorf("not found")
 }

@@ -5,9 +5,9 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4/defaults"
 )
 
-type EventsOverTime struct{}
+type VerticalGraphWithFilters struct{}
 
-func (e *EventsOverTime) GetVisualizationConfig([]lm4.Filter, string, int) []lm4.VisStateAggs {
+func (e *VerticalGraphWithFilters) GetVisualizationConfig(filters []lm4.Filter, field string, size int) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
 		{
 			ID:      "1",
@@ -21,13 +21,13 @@ func (e *EventsOverTime) GetVisualizationConfig([]lm4.Filter, string, int) []lm4
 		{
 			ID:      "2",
 			Enabled: true,
-			Type:    "date_histogram",
-			Schema:  "segment",
+			Type:    "terms",
+			Schema:  "group",
 			Params: lm4.VisStateAggsParams{
-				Field:              "@timestamp",
+				Field:              field,
 				OrderBy:            "1",
 				Order:              "desc",
-				Size:               100,
+				Size:               size,
 				OtherBucket:        true,
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,
@@ -35,9 +35,18 @@ func (e *EventsOverTime) GetVisualizationConfig([]lm4.Filter, string, int) []lm4
 				Filters:            []lm4.Filter{},
 			},
 		},
+		{
+			ID:      "3",
+			Enabled: true,
+			Type:    "filters",
+			Schema:  "segment",
+			Params: lm4.VisStateAggsParams{
+				Filters: filters,
+			},
+		},
 	}
 }
 
-func (e *EventsOverTime) GetDefaultVisState() *lm4.VisState {
-	return defaults.GetDefaultHistogramVisState()
+func (e *VerticalGraphWithFilters) GetDefaultVisState() *lm4.VisState {
+	return defaults.GetDefaultVerticalGraphWithFiltersVisState()
 }

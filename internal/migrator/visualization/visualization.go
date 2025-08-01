@@ -23,14 +23,16 @@ type LM4Visualization struct {
 	size              int
 }
 
-func NewLM4Visualisation(title string, lm3filters []lm3.Filter, visType vistypes.VisType) (*lm4.SavedObject, error) {
+func NewLM4Visualisation(title string, lm3filters []lm3.Filter, field string, size int, visType vistypes.VisType) (*lm4.SavedObject, error) {
 	vis := &LM4Visualization{
 		SavedObject:       defaults.GetDefaultVisualizationSavedObject(),
-		VisState:          defaults.GetDefaultHistogramVisState(),
+		VisState:          visType.GetDefaultVisState(),
 		Search:            defaults.GetDefaultSearch(true),
 		VisualizationType: visType,
 		ID:                uuid.New().String(),
 		Title:             title,
+		field:             field,
+		size:              size,
 	}
 
 	vis.migrateFilters(lm3filters)

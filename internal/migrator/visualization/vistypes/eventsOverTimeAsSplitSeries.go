@@ -2,6 +2,7 @@ package vistypes
 
 import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
+	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4/defaults"
 )
 
 type EventsOverTimeAsSplitSeries struct{}
@@ -53,4 +54,8 @@ func (e *EventsOverTimeAsSplitSeries) GetVisualizationConfig(_ []lm4.Filter, fie
 			},
 		},
 	}
+}
+
+func (e *EventsOverTimeAsSplitSeries) GetDefaultVisState() *lm4.VisState {
+	return defaults.GetDefaultHistogramVisState()
 }
