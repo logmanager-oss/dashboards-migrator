@@ -256,3 +256,46 @@ func GetDefaultVerticalGraphWithFiltersVisState() *lm4.VisState { // nolint:dupl
 		},
 	}
 }
+
+func GetDefaultPieGraphVisState() *lm4.VisState { // nolint:dupl // we don't care about duplicates here
+	return &lm4.VisState{
+		Title: "",
+		Type:  "pie",
+		Aggs:  []lm4.VisStateAggs{},
+		Params: lm4.VisStateParams{
+			Type:           "pie",
+			AddTooltip:     true,
+			AddLegend:      true,
+			LegendPosition: "right",
+			IsDonut:        false,
+			Labels: map[string]interface{}{
+				"show":       true,
+				"values":     true,
+				"last_level": true,
+				"truncate":   100,
+			},
+		},
+	}
+}
+
+func GetDefaultPieWithFiltersGraphVisState() *lm4.VisState { // nolint:dupl // we don't care about duplicates here
+	return &lm4.VisState{
+		Title: "",
+		Type:  "pie",
+		Aggs:  []lm4.VisStateAggs{},
+		Params: lm4.VisStateParams{
+			Type:           "pie",
+			AddTooltip:     true,
+			AddLegend:      true,
+			LegendPosition: "right",
+			IsDonut:        false,
+			Labels: map[string]interface{}{
+				"show":       true,
+				"values":     true,
+				"last_level": true,
+				"truncate":   100,
+			},
+			Row: false,
+		},
+	}
+}

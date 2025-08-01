@@ -106,16 +106,18 @@ type Filter struct {
 }
 
 type VisStateParams struct {
-	Type           string                   `json:"type"`
-	Grid           map[string]interface{}   `json:"grid"`
-	CategoryAxes   []map[string]interface{} `json:"categoryAxes"`
-	ValueAxes      []map[string]interface{} `json:"valueAxes"`
-	SeriesParams   []map[string]interface{} `json:"seriesParams"`
-	AddTooltip     bool                     `json:"addTooltip"`
-	AddLegend      bool                     `json:"addLegend"`
-	LegendPosition string                   `json:"legendPosition"`
+	Type           string                   `json:"type,omitempty"`
+	Grid           map[string]interface{}   `json:"grid,omitempty"`
+	CategoryAxes   []map[string]interface{} `json:"categoryAxes,omitempty"`
+	ValueAxes      []map[string]interface{} `json:"valueAxes,omitempty"`
+	SeriesParams   []map[string]interface{} `json:"seriesParams,omitempty"`
+	AddTooltip     bool                     `json:"addTooltip,omitempty"`
+	AddLegend      bool                     `json:"addLegend,omitempty"`
+	LegendPosition string                   `json:"legendPosition,omitempty"`
 	Times          []interface{}            `json:"times"`
-	AddTimeMarker  bool                     `json:"addTimeMarker"`
-	Labels         map[string]interface{}   `json:"labels"`
-	ThresholdLine  map[string]interface{}   `json:"thresholdLine"`
+	AddTimeMarker  bool                     `json:"addTimeMarker,omitempty"`
+	Labels         map[string]interface{}   `json:"labels,omitempty"`
+	ThresholdLine  map[string]interface{}   `json:"thresholdLine,omitempty"`
+	IsDonut        bool                     `json:"isDonut,omitempty"`
+	Row            bool                     `json:"row,omitempty"`
 }

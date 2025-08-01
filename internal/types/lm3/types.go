@@ -104,4 +104,5 @@ type Panel struct {
 	Intervals    []string `json:"intervals"`
 	Field        string   `json:"field"`
 	Size         int      `json:"size"`
+	Chart        string   `json:"chart"`
 }
