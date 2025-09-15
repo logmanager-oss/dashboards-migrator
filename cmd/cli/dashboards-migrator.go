@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/logmanager-oss/dashboards-migrator/internal/config"
+	"github.com/logmanager-oss/dashboards-migrator/cmd/config"
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator"
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/dashboard"
 	"github.com/logmanager-oss/dashboards-migrator/internal/reader"
@@ -13,12 +13,15 @@ import (
 )
 
 // CLIStart is an entry point for CLI release of dashboard migrator.
-// It reads JSON from path privded via flag which is LM3 dashboard and writes output to path provided by flag or to stdout if no output is provided.
+// It reads JSON from path provided via flag which is LM3 dashboard and writes output to path provided by flag or to stdout if no output is provided.
 func CLIStart() error {
 	slog.Info("Starting dashboards migrator...")
 
 	config := &config.Config{}
-	config.LoadAndValidate()
+	err := config.LoadAndValidate()
+	if err != nil {
+		return fmt.Errorf("parsing flags: %v", err)
+	}
 
 	jsonInput, err := reader.ReadFile(config.InputPath)
 	if err != nil {
