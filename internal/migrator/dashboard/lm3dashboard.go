@@ -18,7 +18,7 @@ func NewLM3Dashboard(input []byte) (*LM3Dashboard, error) {
 	var baseLM3Object *lm3.BaseObject
 	err := json.Unmarshal(input, &baseLM3Object)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshalling input: %v", err)
+		return nil, fmt.Errorf("unmarshalling input: %w", err)
 	}
 
 	lm3dashboard := &LM3Dashboard{}

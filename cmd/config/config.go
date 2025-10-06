@@ -19,19 +19,19 @@ func (c *Config) LoadAndValidate() error {
 	flag.StringVar(&c.InputPath, "i", "", "Path to input file containing LM3 dashboard (Mandatory)")
 	err := c.validateInputPath(c.InputPath)
 	if err != nil {
-		return fmt.Errorf("validating input path: %v", err)
+		return fmt.Errorf("validating input path: %w", err)
 	}
 
 	flag.StringVar(&c.OutputPath, "o", "./", "Path to output file containing LM4 dashboard (Default: current path)")
 	err = c.validateOutputPath(c.OutputPath)
 	if err != nil {
-		return fmt.Errorf("validating output path: %v", err)
+		return fmt.Errorf("validating output path: %w", err)
 	}
 
 	flag.StringVar(&c.IndexPattern, "ip", "", "Index-pattern string (Default: empty)")
 	err = c.validateIndexPattern(c.IndexPattern)
 	if err != nil {
-		return fmt.Errorf("validating index-pattern: %v", err)
+		return fmt.Errorf("validating index-pattern: %w", err)
 	}
 
 	flag.Parse()

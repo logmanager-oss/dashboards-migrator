@@ -18,7 +18,7 @@ func NewWriter(path string) (*OutputWriter, error) {
 	if path != "" {
 		outputFile, err = os.Create(path)
 		if err != nil {
-			return nil, fmt.Errorf("opening output file for writing: %v", err)
+			return nil, fmt.Errorf("opening output file for writing: %w", err)
 		}
 
 	} else {
@@ -34,7 +34,7 @@ func NewWriter(path string) (*OutputWriter, error) {
 func (w *OutputWriter) Write(p []byte) error {
 	_, err := fmt.Fprintln(w.buffer, string(p))
 	if err != nil {
-		return fmt.Errorf("writing output: %v", err)
+		return fmt.Errorf("writing output: %w", err)
 	}
 
 	return nil
