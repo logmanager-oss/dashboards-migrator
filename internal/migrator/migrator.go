@@ -58,7 +58,7 @@ func (migrator *Migrator) migratePanelToVisualization(panel *lm3.Panel) (*lm4.Sa
 
 	visualization, err := visualizations.NewLM4Visualization(visualizationType).Migrate(migrationParams)
 	if err != nil {
-		return nil, fmt.Errorf("migrating %s panel: %v", panel.Title, err)
+		return nil, fmt.Errorf("migrating %s panel: %w", panel.Title, err)
 	}
 
 	return visualization, nil

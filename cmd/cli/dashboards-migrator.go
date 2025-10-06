@@ -20,12 +20,12 @@ func CLIStart() error {
 	config := &config.Config{}
 	err := config.LoadAndValidate()
 	if err != nil {
-		return fmt.Errorf("parsing flags: %v", err)
+		return fmt.Errorf("parsing flags: %w", err)
 	}
 
 	jsonInput, err := reader.ReadFile(config.InputPath)
 	if err != nil {
-		return fmt.Errorf("reading file: '%s' failed: %v", jsonInput, err)
+		return fmt.Errorf("reading file: '%s' failed: %w", jsonInput, err)
 	}
 
 	lm3Dashboard, err := dashboard.NewLM3Dashboard(jsonInput)
@@ -35,7 +35,7 @@ func CLIStart() error {
 
 	outputWriter, err := writer.NewWriter(config.OutputPath)
 	if err != nil {
-		return fmt.Errorf("creating output file: '%s' failed: %v", config.OutputPath, err)
+		return fmt.Errorf("creating output file: '%s' failed: %w", config.OutputPath, err)
 	}
 
 	defer outputWriter.Close()
@@ -46,18 +46,18 @@ func CLIStart() error {
 	migrator := migrator.New(lm4Dashboard, lm3Dashboard)
 	lm4dashboard, err := migrator.Migrate(config.IndexPattern)
 	if err != nil {
-		return fmt.Errorf("dashboards migration failed: %v", err)
+		return fmt.Errorf("dashboards migration failed: %w", err)
 	}
 
 	for _, savedObject := range lm4dashboard {
 		rawSavedObject, err := json.Marshal(savedObject)
 		if err != nil {
-			return fmt.Errorf("marshalling saved object: %v", err)
+			return fmt.Errorf("marshalling saved object: %w", err)
 		}
 
 		err = outputWriter.Write(rawSavedObject)
 		if err != nil {
-			return fmt.Errorf("writing saved object to file: %v", err)
+			return fmt.Errorf("writing saved object to file: %w", err)
 		}
 	}
 
