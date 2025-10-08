@@ -26,5 +26,17 @@ func (migrator *Migrator) visualisationTypeDiscovery(panel *lm3.Panel, queries [
 		return &vistypes.Map{}, nil
 	}
 
+	if panel.Type == "terms" {
+		if panel.Chart == "bar" {
+			return &vistypes.VerticalGraph{}, nil
+		}
+		if panel.Chart == "pie" {
+			return &vistypes.PieGraph{}, nil
+		}
+		if panel.Chart == "table" {
+			return &vistypes.TableGraph{}, nil
+		}
+	}
+
 	return nil, fmt.Errorf("not found")
 }
