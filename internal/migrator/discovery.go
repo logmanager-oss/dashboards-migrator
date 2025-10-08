@@ -22,5 +22,9 @@ func (migrator *Migrator) visualisationTypeDiscovery(panel *lm3.Panel, queries [
 		return &vistypes.LogOverview{}, nil
 	}
 
+	if panel.Type == "map" {
+		return &vistypes.Map{}, nil
+	}
+
 	return nil, fmt.Errorf("not found")
 }
