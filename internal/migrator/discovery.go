@@ -18,5 +18,9 @@ func (migrator *Migrator) visualisationTypeDiscovery(panel *lm3.Panel, queries [
 		return &vistypes.EventsOverTime{}, nil
 	}
 
+	if panel.Type == "table" {
+		return &vistypes.LogOverview{}, nil
+	}
+
 	return nil, fmt.Errorf("not found")
 }
