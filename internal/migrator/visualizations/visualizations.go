@@ -83,6 +83,16 @@ func (vis *LM4Visualization) migrateTitles(title string) {
 }
 
 func (vis *LM4Visualization) buildFinalVisualizationObject() (*lm4.SavedObject, error) {
+	// Log Overview does not have visState object, so skip it
+	if _, ok := vis.VisualizationType.(*vistypes.LogOverview); !ok {
+		visStateRaw, err := json.Marshal(vis.VisState)
+		if err != nil {
+			return nil, err
+		}
+
+		vis.SavedObject.Attributes.VisState = string(visStateRaw)
+	}
+
 	searchRaw, err := json.Marshal(vis.Search)
 	if err != nil {
 		return nil, err
