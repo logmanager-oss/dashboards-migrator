@@ -6,6 +6,7 @@ import (
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/dashboard"
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualizations"
+	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualizations/vistypes"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
@@ -54,7 +55,7 @@ func (migrator *Migrator) migratePanelToVisualization(panel *lm3.Panel) (*lm4.Sa
 		return nil, err
 	}
 
-	migrationParams := migrator.prepareMigrationParams(panel, queries)
+	migrationParams := migrator.prepareMigrationParams(panel, queries, visualizationType)
 
 	visualization, err := visualizations.NewLM4Visualization(visualizationType).Migrate(migrationParams)
 	if err != nil {
@@ -64,7 +65,15 @@ func (migrator *Migrator) migratePanelToVisualization(panel *lm3.Panel) (*lm4.Sa
 	return visualization, nil
 }
 
-func (migrator *Migrator) prepareMigrationParams(panel *lm3.Panel, queries []lm3.Query) *visualizations.MigrationParams {
+func (migrator *Migrator) prepareMigrationParams(panel *lm3.Panel, queries []lm3.Query, visualizationType vistypes.VisType) *visualizations.MigrationParams {
+	if _, ok := visualizationType.(*vistypes.LogOverview); ok {
+		return &visualizations.MigrationParams{
+			Title:   panel.Title,
+			Queries: queries,
+			Columns: panel.Fields,
+		}
+	}
+
 	return &visualizations.MigrationParams{
 		Title: panel.Title,
 		// we no longer use .raw field name convention so we need to strip it
