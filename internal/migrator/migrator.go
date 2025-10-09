@@ -34,6 +34,8 @@ func (migrator *Migrator) Migrate(_ string) ([]lm4.SavedObject, error) {
 			}
 
 			output = append(output, *visualization)
+
+			migrator.appendVisualizationToDashboard(visualization, panel.Span)
 		}
 	}
 
@@ -92,4 +94,25 @@ func (migrator *Migrator) prepareMigrationParams(panel *lm3.Panel, queries []lm3
 		Size:    panel.Size,
 		Queries: queries,
 	}
+}
+
+func (migrator *Migrator) appendVisualizationToDashboard(visualization *lm4.SavedObject, panelSpan int) {
+	grid := migrator.lm4Dashboard.CalculateGridPosition(panelSpan)
+
+	panel := migrator.lm4Dashboard.BuildPanelObject(
+		grid,
+		visualization.ID,
+		visualization.Attributes.Title,
+	)
+
+	migrator.lm4Dashboard.Panels = append(migrator.lm4Dashboard.Panels, *panel)
+
+	ref := migrator.lm4Dashboard.BuildReferenceObject(
+		visualization.ID,
+		visualization.Type,
+	)
+
+	migrator.lm4Dashboard.References = append(migrator.lm4Dashboard.References, *ref)
+
+	migrator.lm4Dashboard.CurrentPanelNumber++
 }
