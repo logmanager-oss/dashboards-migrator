@@ -139,6 +139,53 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 			},
 			expected: `{"attributes":{"columns":["meta.src.ip@ip.value","raw"],"description":"","hits":0,"kibanaSavedObjectMeta":{"searchSourceJSON":"{\"highlightAll\":true,\"version\":true,\"query\":{\"query\":\"msg.protocol:TCP or msg.protocol:UDP\",\"language\":\"kuery\"},\"filter\":[],\"indexRefName\":\"kibanaSavedObjectMeta.searchSourceJSON.index\"}"},"sort":[],"title":"Log Overview With Filters","version":1},"id":"","migrationVersion":{"search":"7.9.3"},"references":[{"id":"","name":"kibanaSavedObjectMeta.searchSourceJSON.index","type":"index-pattern"}],"type":"search","updated_at":"0001-01-01T00:00:00Z","version":""}`,
 		},
+		{
+			name:              "Test case: migrate panel: map",
+			title:             "Map",
+			visualizationType: &vistypes.Map{},
+			queries: []lm3.Query{
+				{
+					ID:     0,
+					Type:   "lucene",
+					Query:  "*",
+					Alias:  "",
+					Color:  "",
+					Pin:    false,
+					Enable: true,
+				},
+			},
+			field:    "msg.dst_ip@ip.country_code",
+			size:     100,
+			expected: `{"attributes":{"description":"","kibanaSavedObjectMeta":{"searchSourceJSON":"{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[],\"indexRefName\":\"kibanaSavedObjectMeta.searchSourceJSON.index\"}"},"title":"Map","uiStateJSON":"{}","version":1,"visState":"{\"title\":\"Map\",\"type\":\"region_map\",\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"params\":{},\"schema\":\"metric\"},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"params\":{\"field\":\"msg.dst_ip@ip.country_code\",\"orderBy\":\"1\",\"order\":\"desc\",\"size\":100,\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"exclude\":\"Un\"},\"schema\":\"segment\"}],\"params\":{\"layerChosenByUser\":\"default\",\"legendPosition\":\"bottomright\",\"addTooltip\":true,\"colorSchema\":\"Yellow to Red\",\"emsHotLink\":\"\",\"isDisplayWarning\":true,\"wms\":{\"enabled\":false,\"url\":\"\",\"options\":{\"version\":\"\",\"layers\":\"\",\"format\":\"image/png\",\"transparent\":true,\"attribution\":\"\",\"styles\":\"\"},\"selectedTmsLayer\":{\"origin\":\"elastic_maps_service\",\"id\":\"road_map\",\"minZoom\":0,\"maxZoom\":22,\"attribution\":\"<a rel=\\\"noreferrer noopener\\\" href=\\\"https://www.openstreetmap.org/copyright\\\">Map data © OpenStreetMap contributors</a>\"}},\"mapZoom\":2,\"mapCenter\":[0,0],\"outlineWeight\":1,\"showAllShapes\":true,\"selectedLayer\":{\"name\":\"planet\",\"url\":\"/vendor/maps/ne_50m_admin_0_countries.geojson?v=1\",\"meta\":{\"feature_collection_path\":\"features\"},\"attribution\":\"Custom GeoJSON – Local\",\"fields\":[{\"name\":\"ISO_A2\",\"description\":\"ISO Alpha-2 Country Code\"}],\"format\":{\"type\":\"geojson\"},\"layerId\":\"self_hosted.planet\",\"isEMS\":false},\"selectedJoinField\":{\"name\":\"ISO_A2\",\"description\":\"ISO Alpha-2 Country Code\"},\"selectedCustomLayer\":{\"name\":\"planet\",\"url\":\"/vendor/maps/ne_50m_admin_0_countries.geojson?v=1\",\"meta\":{\"feature_collection_path\":\"features\"},\"attribution\":\"Custom GeoJSON – Local\",\"fields\":[{\"name\":\"ISO_A2\",\"description\":\"ISO Alpha-2 Country Code\"}],\"format\":{\"type\":\"geojson\"},\"layerId\":\"self_hosted.planet\",\"isEMS\":false},\"selectedCustomJoinField\":{\"name\":\"ISO_A2\",\"description\":\"ISO Alpha-2 Country Code\"}}}"},"id":"","migrationVersion":{"visualization":"7.10.0"},"references":[{"id":"","name":"kibanaSavedObjectMeta.searchSourceJSON.index","type":"index-pattern"}],"type":"visualization","updated_at":"0001-01-01T00:00:00Z","version":""}`,
+		},
+		{
+			name:              "Test case: migrate panel: map with filters",
+			title:             "Map With Filters",
+			visualizationType: &vistypes.Map{},
+			queries: []lm3.Query{
+				{
+					ID:     0,
+					Type:   "lucene",
+					Query:  "msg.dst_ip@ip.country_code:US",
+					Alias:  "",
+					Color:  "",
+					Pin:    false,
+					Enable: true,
+				},
+				{
+					ID:     1,
+					Type:   "lucene",
+					Query:  "msg.dst_ip@ip.country_code:CZ",
+					Alias:  "",
+					Color:  "",
+					Pin:    false,
+					Enable: true,
+				},
+			},
+			field:    "msg.dst_ip@ip.country_code",
+			size:     100,
+			expected: `{"attributes":{"description":"","kibanaSavedObjectMeta":{"searchSourceJSON":"{\"query\":{\"query\":\"msg.dst_ip@ip.country_code:US or msg.dst_ip@ip.country_code:CZ\",\"language\":\"kuery\"},\"filter\":[],\"indexRefName\":\"kibanaSavedObjectMeta.searchSourceJSON.index\"}"},"title":"Map With Filters","uiStateJSON":"{}","version":1,"visState":"{\"title\":\"Map With Filters\",\"type\":\"region_map\",\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"params\":{},\"schema\":\"metric\"},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"params\":{\"field\":\"msg.dst_ip@ip.country_code\",\"orderBy\":\"1\",\"order\":\"desc\",\"size\":100,\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"exclude\":\"Un\"},\"schema\":\"segment\"}],\"params\":{\"layerChosenByUser\":\"default\",\"legendPosition\":\"bottomright\",\"addTooltip\":true,\"colorSchema\":\"Yellow to Red\",\"emsHotLink\":\"\",\"isDisplayWarning\":true,\"wms\":{\"enabled\":false,\"url\":\"\",\"options\":{\"version\":\"\",\"layers\":\"\",\"format\":\"image/png\",\"transparent\":true,\"attribution\":\"\",\"styles\":\"\"},\"selectedTmsLayer\":{\"origin\":\"elastic_maps_service\",\"id\":\"road_map\",\"minZoom\":0,\"maxZoom\":22,\"attribution\":\"<a rel=\\\"noreferrer noopener\\\" href=\\\"https://www.openstreetmap.org/copyright\\\">Map data © OpenStreetMap contributors</a>\"}},\"mapZoom\":2,\"mapCenter\":[0,0],\"outlineWeight\":1,\"showAllShapes\":true,\"selectedLayer\":{\"name\":\"planet\",\"url\":\"/vendor/maps/ne_50m_admin_0_countries.geojson?v=1\",\"meta\":{\"feature_collection_path\":\"features\"},\"attribution\":\"Custom GeoJSON – Local\",\"fields\":[{\"name\":\"ISO_A2\",\"description\":\"ISO Alpha-2 Country Code\"}],\"format\":{\"type\":\"geojson\"},\"layerId\":\"self_hosted.planet\",\"isEMS\":false},\"selectedJoinField\":{\"name\":\"ISO_A2\",\"description\":\"ISO Alpha-2 Country Code\"},\"selectedCustomLayer\":{\"name\":\"planet\",\"url\":\"/vendor/maps/ne_50m_admin_0_countries.geojson?v=1\",\"meta\":{\"feature_collection_path\":\"features\"},\"attribution\":\"Custom GeoJSON – Local\",\"fields\":[{\"name\":\"ISO_A2\",\"description\":\"ISO Alpha-2 Country Code\"}],\"format\":{\"type\":\"geojson\"},\"layerId\":\"self_hosted.planet\",\"isEMS\":false},\"selectedCustomJoinField\":{\"name\":\"ISO_A2\",\"description\":\"ISO Alpha-2 Country Code\"}}}"},"id":"","migrationVersion":{"visualization":"7.10.0"},"references":[{"id":"","name":"kibanaSavedObjectMeta.searchSourceJSON.index","type":"index-pattern"}],"type":"visualization","updated_at":"0001-01-01T00:00:00Z","version":""}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
