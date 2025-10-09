@@ -13,9 +13,7 @@ func GetDefaultPanel() *lm4.PanelJSON {
 			I: "",
 		},
 		PanelIndex: "",
-		EmbeddableConfig: struct {
-			HidePanelTitles bool "json:\"hidePanelTitles\""
-		}{
+		EmbeddableConfig: lm4.EmbeddableConfig{
 			HidePanelTitles: false,
 		},
 		Title:        "",

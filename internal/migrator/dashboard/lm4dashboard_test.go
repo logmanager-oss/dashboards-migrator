@@ -141,9 +141,7 @@ func TestLM4Dashboard_BuildPanelObject(t *testing.T) {
 				Version:    "2.19.1",
 				GridData:   lm4.GridData{X: 0, Y: 0, W: 48, H: 15, I: "test"},
 				PanelIndex: "test",
-				EmbeddableConfig: struct {
-					HidePanelTitles bool "json:\"hidePanelTitles\""
-				}{
+				EmbeddableConfig: lm4.EmbeddableConfig{
 					HidePanelTitles: false,
 				},
 				Title:        "test",
