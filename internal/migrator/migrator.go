@@ -66,6 +66,17 @@ func (migrator *Migrator) migratePanelToVisualization(panel *lm3.Panel) (*lm4.Sa
 }
 
 func (migrator *Migrator) prepareMigrationParams(panel *lm3.Panel, queries []lm3.Query, visualizationType vistypes.VisType) *visualizations.MigrationParams {
+	// if visualisation type is EventsOverTimeAsSplitSeries then it's field and size will be in a different place than otherwise
+	if _, ok := visualizationType.(*vistypes.EventsOverTimeAsSplitSeries); ok {
+		return &visualizations.MigrationParams{
+			Title: panel.Title,
+			// EventsOverTimeAsSplitSeries can have only one query, so this is ok
+			Field:   strings.TrimSuffix(queries[0].Field, ".raw"),
+			Size:    queries[0].Size,
+			Queries: queries,
+		}
+	}
+
 	if _, ok := visualizationType.(*vistypes.LogOverview); ok {
 		return &visualizations.MigrationParams{
 			Title:   panel.Title,
