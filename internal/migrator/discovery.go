@@ -3,38 +3,38 @@ package migrator
 import (
 	"fmt"
 
-	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualizations/vistypes"
+	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
 )
 
-func (migrator *Migrator) visualisationTypeDiscovery(panel *lm3.Panel, queries []lm3.Query) (vistypes.VisType, error) { // nolint
+func visualisationTypeDiscovery(panel *lm3.Panel, queries []lm3.Query) (objects.VisType, error) { // nolint
 	// Histogram panel type means its Events Over Time
 	if panel.Type == "histogram" {
 		// If there is only a single filter and it is topN, then it must be Events Over Time As Split Series
 		if len(queries) == 1 && queries[0].Type == "topN" {
-			return &vistypes.EventsOverTimeAsSplitSeries{}, nil
+			return &objects.EventsOverTimeAsSplitSeries{}, nil
 		}
 
-		return &vistypes.EventsOverTime{}, nil
+		return &objects.EventsOverTime{}, nil
 	}
 
 	if panel.Type == "table" {
-		return &vistypes.LogOverview{}, nil
+		return &objects.LogOverview{}, nil
 	}
 
 	if panel.Type == "map" {
-		return &vistypes.Map{}, nil
+		return &objects.Map{}, nil
 	}
 
 	if panel.Type == "terms" {
 		if panel.Chart == "bar" {
-			return &vistypes.VerticalGraph{}, nil
+			return &objects.VerticalGraph{}, nil
 		}
 		if panel.Chart == "pie" {
-			return &vistypes.PieGraph{}, nil
+			return &objects.PieGraph{}, nil
 		}
 		if panel.Chart == "table" {
-			return &vistypes.TableGraph{}, nil
+			return &objects.TableGraph{}, nil
 		}
 	}
 

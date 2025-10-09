@@ -1,4 +1,4 @@
-package vistypes
+package objects
 
 import "github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 
