@@ -42,9 +42,7 @@ func CLIStart() error {
 	defer outputWriter.Flush()
 
 	lm4Dashboard := dashboard.NewLM4Dashboard()
-
-	migrator := migrator.New(lm4Dashboard, lm3Dashboard)
-	lm4dashboard, err := migrator.Migrate(config.IndexPattern)
+	lm4dashboard, err := migrator.Migrate(lm4Dashboard, lm3Dashboard)
 	if err != nil {
 		return fmt.Errorf("dashboards migration failed: %w", err)
 	}

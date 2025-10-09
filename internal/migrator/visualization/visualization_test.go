@@ -1,21 +1,22 @@
-package visualizations
+package visualization
 
 import (
 	"encoding/json"
 	"testing"
 
-	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualizations/vistypes"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMigrator_migrateVisualizations(t *testing.T) {
 	tests := []struct {
 		name              string
 		title             string
-		visualizationType vistypes.VisType
+		visualizationType objects.VisType
 		queries           []lm3.Query
 		queriesIDs        []int
 		field             string
@@ -26,7 +27,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: events over time",
 			title:             "Events Over Time",
-			visualizationType: &vistypes.EventsOverTime{},
+			visualizationType: &objects.EventsOverTime{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -43,7 +44,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: events over time with queries",
 			title:             "Events Over Time With Queries",
-			visualizationType: &vistypes.EventsOverTime{},
+			visualizationType: &objects.EventsOverTime{},
 			queries: []lm3.Query{
 				{
 					ID:     1,
@@ -69,7 +70,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: events over time As Split Series",
 			title:             "Events Over Time As Split Series",
-			visualizationType: &vistypes.EventsOverTimeAsSplitSeries{},
+			visualizationType: &objects.EventsOverTimeAsSplitSeries{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -91,7 +92,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: log overview",
 			title:             "Log Overview",
-			visualizationType: &vistypes.LogOverview{},
+			visualizationType: &objects.LogOverview{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -112,7 +113,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: log overview with filters",
 			title:             "Log Overview With Filters",
-			visualizationType: &vistypes.LogOverview{},
+			visualizationType: &objects.LogOverview{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -142,7 +143,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: map",
 			title:             "Map",
-			visualizationType: &vistypes.Map{},
+			visualizationType: &objects.Map{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -161,7 +162,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: map with filters",
 			title:             "Map With Filters",
-			visualizationType: &vistypes.Map{},
+			visualizationType: &objects.Map{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -189,7 +190,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: vertical graph",
 			title:             "Vertical Graph",
-			visualizationType: &vistypes.VerticalGraph{},
+			visualizationType: &objects.VerticalGraph{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -208,7 +209,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: vertical graph",
 			title:             "Vertical Graph With Filters",
-			visualizationType: &vistypes.VerticalGraph{},
+			visualizationType: &objects.VerticalGraph{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -236,7 +237,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: pie graph",
 			title:             "Pie Graph",
-			visualizationType: &vistypes.PieGraph{},
+			visualizationType: &objects.PieGraph{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -255,7 +256,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: pie graph with filters",
 			title:             "Pie Graph With Filters",
-			visualizationType: &vistypes.PieGraph{},
+			visualizationType: &objects.PieGraph{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -283,7 +284,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: table graph",
 			title:             "Table Graph",
-			visualizationType: &vistypes.TableGraph{},
+			visualizationType: &objects.TableGraph{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -302,7 +303,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		{
 			name:              "Test case: migrate panel: table graph with filters",
 			title:             "Table Graph With Filters",
-			visualizationType: &vistypes.TableGraph{},
+			visualizationType: &objects.TableGraph{},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -330,17 +331,18 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			newLM4visualization := NewLM4Visualization(tt.visualizationType)
-
-			migrationParams := &MigrationParams{
+			params := &MigrationParams{
 				tt.title,
 				tt.field,
 				tt.size,
 				tt.queries,
 				tt.columns,
+				tt.visualizationType,
+				uuid.New().String(),
+				0,
 			}
 
-			actualSavedObject, err := newLM4visualization.Migrate(migrationParams)
+			actualSavedObject, err := MigratePanelToVisualization(params)
 			if err != nil {
 				t.Error(err)
 			}

@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
-	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4/defaults"
 )
 
 func TestLM4Dashboard_CalculateGridPosition(t *testing.T) {
@@ -100,12 +100,12 @@ func TestLM4Dashboard_CalculateGridPosition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dashboard := &LM4Dashboard{
-				savedObject:         defaults.GetDefaultDashboardSavedObject(),
-				search:              defaults.GetDefaultSearch(false),
+				savedObject:         objects.GetDefaultDashboardSavedObject(),
+				search:              objects.GetDefaultSearchObject(false),
 				id:                  uuid.New().String(),
 				currentGridPosition: tt.currentGridPosition,
 			}
-			grid := dashboard.CalculateGridPosition(tt.span)
+			grid := dashboard.calculateGridPosition(tt.span)
 
 			assert.Equal(t, tt.expected, grid)
 		})
@@ -152,14 +152,14 @@ func TestLM4Dashboard_BuildPanelObject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dashboard := &LM4Dashboard{
-				savedObject:         defaults.GetDefaultDashboardSavedObject(),
-				search:              defaults.GetDefaultSearch(false),
+				savedObject:         objects.GetDefaultDashboardSavedObject(),
+				search:              objects.GetDefaultSearchObject(false),
 				id:                  uuid.New().String(),
 				currentGridPosition: tt.currentGridPosition,
 			}
-			grid := dashboard.CalculateGridPosition(tt.span)
+			grid := dashboard.calculateGridPosition(tt.span)
 
-			panel := dashboard.BuildPanelObject(
+			panel := dashboard.buildPanelObject(
 				grid,
 				tt.id,
 				tt.title,
@@ -192,12 +192,12 @@ func TestLM4Dashboard_BuildReferenceObject(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dashboard := &LM4Dashboard{
-				savedObject: defaults.GetDefaultDashboardSavedObject(),
-				search:      defaults.GetDefaultSearch(false),
+				savedObject: objects.GetDefaultDashboardSavedObject(),
+				search:      objects.GetDefaultSearchObject(false),
 				id:          uuid.New().String(),
 			}
 
-			panel := dashboard.BuildReferenceObject(
+			panel := dashboard.buildReferenceObject(
 				tt.id,
 				tt.refType,
 			)
