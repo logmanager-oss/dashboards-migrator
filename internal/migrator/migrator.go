@@ -41,7 +41,7 @@ func Migrate(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Da
 		}
 	}
 
-	dashboard, err := lm4Dashboard.BuildDashboardObject()
+	dashboard, err := lm4Dashboard.BuildDashboardObject(lm3Dashboard.Title)
 	if err != nil {
 		return nil, fmt.Errorf("building LM4 dashboard object: %w", err)
 	}
