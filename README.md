@@ -2,7 +2,11 @@
 
 ## Description
 
-Dashboards migrator is a tool for migrating dashboards from LM3 to LM4.
+Dashboards migrator is a tool for migrating dashboards from Logmanager 3 to Logmanager 4.
+
+## How it works
+
+Dashboards migrator takes a dashboard exported from LM3 as input, iterates over its contents and migrates it to version compliant with LM4.
 
 ## Usage
 
