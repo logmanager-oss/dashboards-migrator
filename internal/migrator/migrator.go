@@ -15,12 +15,12 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
-func Migrate(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Dashboard) ([]lm4.SavedObject, error) {
+func Migrate(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Dashboard, indexPattern string) ([]lm4.SavedObject, error) {
 	var output []lm4.SavedObject
 
 	for _, row := range lm3Dashboard.Rows {
 		for _, panel := range row.Panels {
-			params, err := gatherMigrationParams(&panel, lm3Dashboard.GetPanelQueries(&panel))
+			params, err := gatherMigrationParams(&panel, lm3Dashboard.GetPanelQueries(&panel), indexPattern)
 			if err != nil {
 				return nil, fmt.Errorf("building migration params: %w", err)
 			}
@@ -51,10 +51,11 @@ func Migrate(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Da
 	return output, nil
 }
 
-func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query) (*visualization.MigrationParams, error) {
+func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query, indexPattern string) (*visualization.MigrationParams, error) {
 	params := &visualization.MigrationParams{
-		ID:      uuid.New().String(),
-		Queries: queries,
+		ID:           uuid.New().String(),
+		Queries:      queries,
+		IndexPattern: indexPattern,
 	}
 
 	var err error

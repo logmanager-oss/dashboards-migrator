@@ -280,7 +280,7 @@ func Test_gatherMigrationParams(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			params, err := gatherMigrationParams(tt.panel, tt.queries)
+			params, err := gatherMigrationParams(tt.panel, tt.queries, "")
 			if err != nil {
 				if assert.ErrorAs(t, err, &tt.expectedErr) {
 					return
