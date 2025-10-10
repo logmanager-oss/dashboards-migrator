@@ -1,8 +1,6 @@
 package migrator
 
 import (
-	"fmt"
-
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
 )
@@ -38,5 +36,5 @@ func visualisationTypeDiscovery(panel *lm3.Panel, queries []lm3.Query) (objects.
 		}
 	}
 
-	return nil, fmt.Errorf("not found")
+	return nil, &PanelTypeNotFoundError{panel.Type}
 }
