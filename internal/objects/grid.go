@@ -1,8 +1,8 @@
-package defaults
+package objects
 
 import "github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 
-func GetDefaultPanel() *lm4.PanelJSON {
+func GetDefaultPanelObject() *lm4.PanelJSON {
 	return &lm4.PanelJSON{
 		Version: "2.19.1",
 		GridData: lm4.GridData{

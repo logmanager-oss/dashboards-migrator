@@ -8,8 +8,12 @@ Dashboards migrator is a tool for migrating dashboards from LM3 to LM4.
 
 ```
 Usage of ./dashboards-migrator:
-  -i value
-        Path to input file containing LM3 dashboard in JSON format
-  -o value
-        Path to output file containing LM4 dashboard in NDJSON format (default: Stdout)
+  -h
+        Print help
+  -i string
+        Path to input file containing LM3 dashboard (Mandatory)
+  -ip string
+        Index-pattern string (Default: empty)
+  -o string
+        Path to output file containing LM4 dashboard (Mandatory)
 ```
