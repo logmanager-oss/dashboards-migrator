@@ -1,4 +1,4 @@
-package vistypes
+package objects
 
 import (
 	"time"
@@ -6,9 +6,9 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
-type EventsOverTime struct{}
+type VerticalGraph struct{}
 
-func (e *EventsOverTime) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
+func (vg *VerticalGraph) GetDefaultVisualizationSavedObject(indexPattern string) *lm4.SavedObject {
 	return &lm4.SavedObject{
 		Attributes: lm4.Attributes{
 			Description: "",
@@ -24,8 +24,7 @@ func (e *EventsOverTime) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 		MigrationVersion: map[string]interface{}{"visualization": "7.10.0"},
 		References: []lm4.Reference{
 			{
-				// TODO: id should be set to user defined index pattern
-				ID:   "",
+				ID:   indexPattern,
 				Name: "kibanaSavedObjectMeta.searchSourceJSON.index",
 				Type: "index-pattern",
 			},
@@ -36,7 +35,7 @@ func (e *EventsOverTime) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 	}
 }
 
-func (e *EventsOverTime) GetVisualizationConfig(string, int) []lm4.VisStateAggs {
+func (vg *VerticalGraph) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
 		{
 			ID:      "1",
@@ -50,13 +49,13 @@ func (e *EventsOverTime) GetVisualizationConfig(string, int) []lm4.VisStateAggs 
 		{
 			ID:      "2",
 			Enabled: true,
-			Type:    "date_histogram",
-			Schema:  "segment",
+			Type:    "terms",
+			Schema:  "group",
 			Params: lm4.VisStateAggsParams{
-				Field:              "@timestamp",
+				Field:              field,
 				OrderBy:            "1",
 				Order:              "desc",
-				Size:               100,
+				Size:               size,
 				OtherBucket:        true,
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,
@@ -67,7 +66,7 @@ func (e *EventsOverTime) GetVisualizationConfig(string, int) []lm4.VisStateAggs 
 	}
 }
 
-func (e *EventsOverTime) GetDefaultVisState() *lm4.VisState { // nolint:dupl
+func (vg *VerticalGraph) GetDefaultVisState() *lm4.VisState { // nolint:dupl
 	return &lm4.VisState{
 		Title: "",
 		Type:  "histogram",
@@ -82,15 +81,15 @@ func (e *EventsOverTime) GetDefaultVisState() *lm4.VisState { // nolint:dupl
 				{
 					"id":       "CategoryAxis-1",
 					"type":     "category",
-					"position": "bottom",
-					"show":     true,
+					"position": "top",
+					"show":     false,
 					"style":    map[string]interface{}{},
 					"scale": map[string]interface{}{
 						"type": "linear",
 					},
 					"labels": map[string]interface{}{
 						"show":     true,
-						"filter":   false,
+						"filter":   true,
 						"truncate": float64(100),
 					},
 					"title": map[string]interface{}{},
@@ -123,7 +122,7 @@ func (e *EventsOverTime) GetDefaultVisState() *lm4.VisState { // nolint:dupl
 				{
 					"show": true,
 					"type": "histogram",
-					"mode": "stacked",
+					"mode": "normal",
 					"data": map[string]interface{}{
 						"label": "Count",
 						"id":    "1",

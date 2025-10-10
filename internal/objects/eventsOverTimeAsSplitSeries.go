@@ -1,4 +1,4 @@
-package vistypes
+package objects
 
 import (
 	"time"
@@ -6,9 +6,9 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
-type VerticalGraph struct{}
+type EventsOverTimeAsSplitSeries struct{}
 
-func (vg *VerticalGraph) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
+func (e *EventsOverTimeAsSplitSeries) GetDefaultVisualizationSavedObject(indexPattern string) *lm4.SavedObject {
 	return &lm4.SavedObject{
 		Attributes: lm4.Attributes{
 			Description: "",
@@ -24,7 +24,7 @@ func (vg *VerticalGraph) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 		MigrationVersion: map[string]interface{}{"visualization": "7.10.0"},
 		References: []lm4.Reference{
 			{
-				ID:   "",
+				ID:   indexPattern,
 				Name: "kibanaSavedObjectMeta.searchSourceJSON.index",
 				Type: "index-pattern",
 			},
@@ -35,7 +35,7 @@ func (vg *VerticalGraph) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 	}
 }
 
-func (vg *VerticalGraph) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
+func (e *EventsOverTimeAsSplitSeries) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
 		{
 			ID:      "1",
@@ -49,6 +49,25 @@ func (vg *VerticalGraph) GetVisualizationConfig(field string, size int) []lm4.Vi
 		{
 			ID:      "2",
 			Enabled: true,
+			Type:    "date_histogram",
+			Schema:  "segment",
+			Params: lm4.VisStateAggsParams{
+				Field: "@timestamp",
+				TimeRange: map[string]string{
+					"from": "now-15m",
+					"to":   "now",
+				},
+				UseNormalizedOpenSearchInterval: true,
+				ScaleMetricValues:               true,
+				DropPartials:                    false,
+				Interval:                        "auto",
+				MinDocCount:                     1,
+				ExtendedBounds:                  struct{}{},
+			},
+		},
+		{
+			ID:      "3",
+			Enabled: true,
 			Type:    "terms",
 			Schema:  "group",
 			Params: lm4.VisStateAggsParams{
@@ -60,13 +79,12 @@ func (vg *VerticalGraph) GetVisualizationConfig(field string, size int) []lm4.Vi
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,
 				MissingBucketLabel: "Missing",
-				Filters:            []lm4.Filter{},
 			},
 		},
 	}
 }
 
-func (vg *VerticalGraph) GetDefaultVisState() *lm4.VisState { // nolint:dupl
+func (e *EventsOverTimeAsSplitSeries) GetDefaultVisState() *lm4.VisState { // nolint:dupl
 	return &lm4.VisState{
 		Title: "",
 		Type:  "histogram",
@@ -81,15 +99,15 @@ func (vg *VerticalGraph) GetDefaultVisState() *lm4.VisState { // nolint:dupl
 				{
 					"id":       "CategoryAxis-1",
 					"type":     "category",
-					"position": "top",
-					"show":     false,
+					"position": "bottom",
+					"show":     true,
 					"style":    map[string]interface{}{},
 					"scale": map[string]interface{}{
 						"type": "linear",
 					},
 					"labels": map[string]interface{}{
 						"show":     true,
-						"filter":   true,
+						"filter":   false,
 						"truncate": float64(100),
 					},
 					"title": map[string]interface{}{},
@@ -122,7 +140,7 @@ func (vg *VerticalGraph) GetDefaultVisState() *lm4.VisState { // nolint:dupl
 				{
 					"show": true,
 					"type": "histogram",
-					"mode": "normal",
+					"mode": "stacked",
 					"data": map[string]interface{}{
 						"label": "Count",
 						"id":    "1",
