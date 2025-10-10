@@ -72,13 +72,10 @@ type Panel struct {
 	YAxis       bool        `json:"y-axis"`
 	Percentage  bool        `json:"percentage"`
 	Interactive bool        `json:"interactive"`
-	Queries     struct {
-		Mode string `json:"mode"`
-		IDs  []int  `json:"ids"`
-	} `json:"queries"`
-	Title   string `json:"title"`
-	Options bool   `json:"options"`
-	Tooltip struct {
+	Queries     Queries     `json:"queries"`
+	Title       string      `json:"title"`
+	Options     bool        `json:"options"`
+	Tooltip     struct {
 		ValueType    string `json:"value_type"`
 		QueryAsAlias bool   `json:"query_as_alias"`
 	} `json:"tooltip"`
@@ -106,4 +103,9 @@ type Panel struct {
 	Size         int      `json:"size"`
 	Chart        string   `json:"chart"`
 	Fields       []string `json:"fields"`
+}
+
+type Queries struct {
+	Mode string `json:"mode"`
+	IDs  []int  `json:"ids"`
 }
