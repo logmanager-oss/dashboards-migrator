@@ -1,4 +1,4 @@
-package vistypes
+package objects
 
 import (
 	"time"

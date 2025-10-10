@@ -1,4 +1,4 @@
-package defaults
+package objects
 
 const (
 	DefaultVisHeight = 15
