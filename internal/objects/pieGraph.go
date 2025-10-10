@@ -8,7 +8,7 @@ import (
 
 type PieGraph struct{}
 
-func (pg *PieGraph) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
+func (pg *PieGraph) GetDefaultVisualizationSavedObject(indexPattern string) *lm4.SavedObject {
 	return &lm4.SavedObject{
 		Attributes: lm4.Attributes{
 			Description: "",
@@ -24,7 +24,7 @@ func (pg *PieGraph) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 		MigrationVersion: map[string]interface{}{"visualization": "7.10.0"},
 		References: []lm4.Reference{
 			{
-				ID:   "",
+				ID:   indexPattern,
 				Name: "kibanaSavedObjectMeta.searchSourceJSON.index",
 				Type: "index-pattern",
 			},

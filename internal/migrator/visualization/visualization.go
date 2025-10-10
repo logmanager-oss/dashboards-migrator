@@ -18,6 +18,7 @@ type MigrationParams struct {
 	VisualizationType objects.VisType
 	ID                string
 	Span              int
+	IndexPattern      string
 }
 
 type LM4Visualization struct {
@@ -28,7 +29,7 @@ type LM4Visualization struct {
 
 func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, error) {
 	vis := &LM4Visualization{
-		SavedObject: params.VisualizationType.GetDefaultVisualizationSavedObject(),
+		SavedObject: params.VisualizationType.GetDefaultVisualizationSavedObject(params.IndexPattern),
 		VisState:    params.VisualizationType.GetDefaultVisState(),
 		Search:      objects.GetDefaultSearchObject(true),
 	}

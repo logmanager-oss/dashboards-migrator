@@ -8,7 +8,7 @@ import (
 
 type LogOverview struct{}
 
-func (lo *LogOverview) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
+func (lo *LogOverview) GetDefaultVisualizationSavedObject(indexPattern string) *lm4.SavedObject {
 	return &lm4.SavedObject{
 		Attributes: lm4.Attributes{
 			Columns:     nil,
@@ -25,7 +25,7 @@ func (lo *LogOverview) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 		MigrationVersion: map[string]interface{}{"search": "7.9.3"},
 		References: []lm4.Reference{
 			{
-				ID:   "",
+				ID:   indexPattern,
 				Name: "kibanaSavedObjectMeta.searchSourceJSON.index",
 				Type: "index-pattern",
 			},

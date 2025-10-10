@@ -8,7 +8,7 @@ import (
 
 type EventsOverTimeAsSplitSeries struct{}
 
-func (e *EventsOverTimeAsSplitSeries) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
+func (e *EventsOverTimeAsSplitSeries) GetDefaultVisualizationSavedObject(indexPattern string) *lm4.SavedObject {
 	return &lm4.SavedObject{
 		Attributes: lm4.Attributes{
 			Description: "",
@@ -24,8 +24,7 @@ func (e *EventsOverTimeAsSplitSeries) GetDefaultVisualizationSavedObject() *lm4.
 		MigrationVersion: map[string]interface{}{"visualization": "7.10.0"},
 		References: []lm4.Reference{
 			{
-				// TODO: id should be set to user defined index pattern
-				ID:   "",
+				ID:   indexPattern,
 				Name: "kibanaSavedObjectMeta.searchSourceJSON.index",
 				Type: "index-pattern",
 			},
