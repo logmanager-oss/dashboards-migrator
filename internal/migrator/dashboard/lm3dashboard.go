@@ -12,6 +12,7 @@ type LM3Dashboard struct {
 	Rows          []lm3.Row
 	Queries       []lm3.Query
 	GlobalFilters []lm3.GlobalFilter
+	Title         string
 }
 
 func NewLM3Dashboard(input []byte) (*LM3Dashboard, error) {
@@ -25,6 +26,7 @@ func NewLM3Dashboard(input []byte) (*LM3Dashboard, error) {
 	lm3dashboard.unpackQueries(baseLM3Object)
 	lm3dashboard.unpackFilters(baseLM3Object)
 	lm3dashboard.unpackRows(baseLM3Object)
+	lm3dashboard.Title = baseLM3Object.Title
 
 	return lm3dashboard, nil
 }
