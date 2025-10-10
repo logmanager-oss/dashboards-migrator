@@ -1,4 +1,4 @@
-package vistypes
+package objects
 
 import (
 	"time"
@@ -6,9 +6,9 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
-type EventsOverTime struct{}
+type EventsOverTimeAsSplitSeries struct{}
 
-func (e *EventsOverTime) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
+func (e *EventsOverTimeAsSplitSeries) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 	return &lm4.SavedObject{
 		Attributes: lm4.Attributes{
 			Description: "",
@@ -36,7 +36,7 @@ func (e *EventsOverTime) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 	}
 }
 
-func (e *EventsOverTime) GetVisualizationConfig(string, int) []lm4.VisStateAggs {
+func (e *EventsOverTimeAsSplitSeries) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
 		{
 			ID:      "1",
@@ -53,21 +53,39 @@ func (e *EventsOverTime) GetVisualizationConfig(string, int) []lm4.VisStateAggs 
 			Type:    "date_histogram",
 			Schema:  "segment",
 			Params: lm4.VisStateAggsParams{
-				Field:              "@timestamp",
+				Field: "@timestamp",
+				TimeRange: map[string]string{
+					"from": "now-15m",
+					"to":   "now",
+				},
+				UseNormalizedOpenSearchInterval: true,
+				ScaleMetricValues:               true,
+				DropPartials:                    false,
+				Interval:                        "auto",
+				MinDocCount:                     1,
+				ExtendedBounds:                  struct{}{},
+			},
+		},
+		{
+			ID:      "3",
+			Enabled: true,
+			Type:    "terms",
+			Schema:  "group",
+			Params: lm4.VisStateAggsParams{
+				Field:              field,
 				OrderBy:            "1",
 				Order:              "desc",
-				Size:               100,
+				Size:               size,
 				OtherBucket:        true,
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,
 				MissingBucketLabel: "Missing",
-				Filters:            []lm4.Filter{},
 			},
 		},
 	}
 }
 
-func (e *EventsOverTime) GetDefaultVisState() *lm4.VisState { // nolint:dupl
+func (e *EventsOverTimeAsSplitSeries) GetDefaultVisState() *lm4.VisState { // nolint:dupl
 	return &lm4.VisState{
 		Title: "",
 		Type:  "histogram",

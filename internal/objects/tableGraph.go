@@ -1,4 +1,4 @@
-package vistypes
+package objects
 
 import (
 	"time"
@@ -6,9 +6,9 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
-type PieGraph struct{}
+type TableGraph struct{}
 
-func (pg *PieGraph) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
+func (tg *TableGraph) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 	return &lm4.SavedObject{
 		Attributes: lm4.Attributes{
 			Description: "",
@@ -35,7 +35,7 @@ func (pg *PieGraph) GetDefaultVisualizationSavedObject() *lm4.SavedObject {
 	}
 }
 
-func (pg *PieGraph) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
+func (tg *TableGraph) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
 		{
 			ID:      "1",
@@ -50,7 +50,6 @@ func (pg *PieGraph) GetVisualizationConfig(field string, size int) []lm4.VisStat
 			ID:      "2",
 			Enabled: true,
 			Type:    "terms",
-			Schema:  "segment",
 			Params: lm4.VisStateAggsParams{
 				Field:              field,
 				OrderBy:            "1",
@@ -60,29 +59,24 @@ func (pg *PieGraph) GetVisualizationConfig(field string, size int) []lm4.VisStat
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,
 				MissingBucketLabel: "Missing",
-				Filters:            []lm4.Filter{},
 			},
+			Schema: "bucket",
 		},
 	}
 }
 
-func (pg *PieGraph) GetDefaultVisState() *lm4.VisState {
+func (tg *TableGraph) GetDefaultVisState() *lm4.VisState {
 	return &lm4.VisState{
 		Title: "",
-		Type:  "pie",
+		Type:  "table",
 		Aggs:  []lm4.VisStateAggs{},
 		Params: lm4.VisStateParams{
-			Type:           "pie",
-			AddTooltip:     true,
-			AddLegend:      true,
-			LegendPosition: "right",
-			IsDonut:        false,
-			Labels: map[string]interface{}{
-				"show":       true,
-				"values":     true,
-				"last_level": true,
-				"truncate":   100,
-			},
+			PerPage:                10,
+			ShowPartialRows:        false,
+			ShowMetricsAtAllLevels: false,
+			ShowTotal:              false,
+			TotalFunc:              "sum",
+			PercentageCol:          "",
 		},
 	}
 }

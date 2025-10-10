@@ -1,47 +1,49 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/dashboard"
-	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualizations"
-	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualizations/vistypes"
+	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualization"
+	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
-type Migrator struct {
-	lm4Dashboard *dashboard.LM4Dashboard
-	lm3Dashboard *dashboard.LM3Dashboard
-}
-
-func New(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Dashboard) *Migrator {
-	return &Migrator{
-		lm4Dashboard: lm4Dashboard,
-		lm3Dashboard: lm3Dashboard,
-	}
-}
-
-func (migrator *Migrator) Migrate(_ string) ([]lm4.SavedObject, error) {
+func Migrate(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Dashboard) ([]lm4.SavedObject, error) {
 	var output []lm4.SavedObject
 
-	for _, row := range migrator.lm3Dashboard.Rows {
+	for _, row := range lm3Dashboard.Rows {
 		for _, panel := range row.Panels {
-			visualization, err := migrator.migratePanelToVisualization(&panel)
+			params, err := gatherMigrationParams(&panel, lm3Dashboard.GetPanelQueries(&panel))
 			if err != nil {
-				return nil, fmt.Errorf("migrating LM3 panel to LM4 visualization")
+				return nil, fmt.Errorf("building migration params: %w", err)
 			}
 
-			output = append(output, *visualization)
+			visualization, err := visualization.MigratePanelToVisualization(params)
+			if err != nil {
+				panelTypeNotFoundError := &PanelTypeNotFoundError{}
+				if errors.As(err, &panelTypeNotFoundError) {
+					slog.Error(err.Error())
+					continue
+				}
+				return nil, fmt.Errorf("migrating %s LM3 panel to LM4 visualization: %w", panel.Title, err)
+			}
 
-			migrator.appendVisualizationToDashboard(visualization, panel.Span)
+			lm4Dashboard.LinkVisualizationToDashboardObject(params, visualization.Type)
+
+			output = append(output, *visualization)
 		}
 	}
 
-	dashboard, err := migrator.lm4Dashboard.BuildFinalDashboardObject()
+	dashboard, err := lm4Dashboard.BuildDashboardObject()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("building LM4 dashboard object: %w", err)
 	}
 
 	output = append(output, *dashboard)
@@ -49,70 +51,33 @@ func (migrator *Migrator) Migrate(_ string) ([]lm4.SavedObject, error) {
 	return output, nil
 }
 
-func (migrator *Migrator) migratePanelToVisualization(panel *lm3.Panel) (*lm4.SavedObject, error) {
-	queries := migrator.lm3Dashboard.GetPanelQueries(panel)
-
-	visualizationType, err := migrator.visualisationTypeDiscovery(panel, queries)
-	if err != nil {
-		return nil, err
-	}
-
-	migrationParams := migrator.prepareMigrationParams(panel, queries, visualizationType)
-
-	visualization, err := visualizations.NewLM4Visualization(visualizationType).Migrate(migrationParams)
-	if err != nil {
-		return nil, fmt.Errorf("migrating %s panel: %w", panel.Title, err)
-	}
-
-	return visualization, nil
-}
-
-func (migrator *Migrator) prepareMigrationParams(panel *lm3.Panel, queries []lm3.Query, visualizationType vistypes.VisType) *visualizations.MigrationParams {
-	// if visualisation type is EventsOverTimeAsSplitSeries then it's field and size will be in a different place than otherwise
-	if _, ok := visualizationType.(*vistypes.EventsOverTimeAsSplitSeries); ok {
-		return &visualizations.MigrationParams{
-			Title: panel.Title,
-			// EventsOverTimeAsSplitSeries can have only one query, so this is ok
-			Field:   strings.TrimSuffix(queries[0].Field, ".raw"),
-			Size:    queries[0].Size,
-			Queries: queries,
-		}
-	}
-
-	if _, ok := visualizationType.(*vistypes.LogOverview); ok {
-		return &visualizations.MigrationParams{
-			Title:   panel.Title,
-			Queries: queries,
-			Columns: panel.Fields,
-		}
-	}
-
-	return &visualizations.MigrationParams{
-		Title: panel.Title,
-		// we no longer use .raw field name convention so we need to strip it
-		Field:   strings.TrimSuffix(panel.Field, ".raw"),
-		Size:    panel.Size,
+func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query) (*visualization.MigrationParams, error) {
+	params := &visualization.MigrationParams{
+		ID:      uuid.New().String(),
 		Queries: queries,
 	}
-}
 
-func (migrator *Migrator) appendVisualizationToDashboard(visualization *lm4.SavedObject, panelSpan int) {
-	grid := migrator.lm4Dashboard.CalculateGridPosition(panelSpan)
+	var err error
+	params.VisualizationType, err = visualisationTypeDiscovery(panel, params.Queries)
+	if err != nil {
+		return nil, fmt.Errorf("discovering visualization type: %w", err)
+	}
 
-	panel := migrator.lm4Dashboard.BuildPanelObject(
-		grid,
-		visualization.ID,
-		visualization.Attributes.Title,
-	)
+	params.Title = panel.Title
+	params.Span = panel.Span
 
-	migrator.lm4Dashboard.Panels = append(migrator.lm4Dashboard.Panels, *panel)
+	switch params.VisualizationType.(type) {
+	case *objects.EventsOverTimeAsSplitSeries:
+		// EventsOverTimeAsSplitSeries can have only one query, so this is ok
+		params.Field = strings.TrimSuffix(params.Queries[0].Field, ".raw")
+		params.FieldSize = params.Queries[0].Size
+	case *objects.LogOverview:
+		params.Columns = panel.Fields
+	default:
+		// we no longer use .raw field name convention so we need to strip it
+		params.Field = strings.TrimSuffix(panel.Field, ".raw")
+		params.FieldSize = panel.Size
+	}
 
-	ref := migrator.lm4Dashboard.BuildReferenceObject(
-		visualization.ID,
-		visualization.Type,
-	)
-
-	migrator.lm4Dashboard.References = append(migrator.lm4Dashboard.References, *ref)
-
-	migrator.lm4Dashboard.CurrentPanelNumber++
+	return params, nil
 }
