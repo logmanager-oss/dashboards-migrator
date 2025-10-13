@@ -38,14 +38,37 @@ type KibanaSavedObjectMeta struct {
 }
 
 type SearchSourceJSON struct {
-	Query        Query                    `json:"query"`
-	Filter       []map[string]interface{} `json:"filter"`
-	IndexRefName string                   `json:"indexRefName,omitempty"`
+	Query        Query          `json:"query"`
+	Filter       []GlobalFilter `json:"filter"`
+	IndexRefName string         `json:"indexRefName,omitempty"`
 }
 
 type Query struct {
 	Language string `json:"language"`
 	Query    string `json:"query"`
+}
+
+type GlobalFilter struct {
+	Meta  GlobalFilterMeta  `json:"meta"`
+	Query GlobalFilterQuery `json:"query"`
+	State map[string]string `json:"$state"`
+}
+
+type GlobalFilterQuery struct {
+	MatchPhrase map[string]string `json:"match_phrase,omitempty"`
+	QueryString map[string]string `json:"query_string,omitempty"`
+}
+
+type GlobalFilterMeta struct {
+	Alias    interface{} `json:"alias"`
+	Negate   bool        `json:"negate"`
+	Disabled bool        `json:"disabled"`
+	Type     string      `json:"type"`
+	Key      string      `json:"key"`
+	Params   struct {
+		Query string `json:"query"`
+	} `json:"params,omitempty"`
+	IndexRefName string `json:"indexRefName"`
 }
 
 type PanelJSON struct {

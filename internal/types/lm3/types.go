@@ -37,6 +37,8 @@ type GlobalFilter struct {
 	Active  bool   `json:"active"`
 	Alias   string `json:"alias"`
 	ID      int    `json:"id"`
+	Query   string `json:"query"`
+	Value   string `json:"value"`
 }
 
 type Row struct {

@@ -39,6 +39,9 @@ func (d *LM3Dashboard) unpackQueries(lm3dashboard *lm3.BaseObject) {
 
 func (d *LM3Dashboard) unpackFilters(lm3dashboard *lm3.BaseObject) {
 	for _, filter := range lm3dashboard.Services.GlobalFilters.List {
+		if filter.Field == "@timestamp" {
+			continue
+		}
 		d.GlobalFilters = append(d.GlobalFilters, filter)
 	}
 }
