@@ -1,7 +1,9 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/google/uuid"
@@ -25,6 +27,11 @@ func Migrate(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Da
 
 			visualization, err := visualization.MigratePanelToVisualization(params)
 			if err != nil {
+				panelTypeNotFoundError := &PanelTypeNotFoundError{}
+				if errors.As(err, &panelTypeNotFoundError) {
+					slog.Error(err.Error())
+					continue
+				}
 				return nil, fmt.Errorf("migrating %s LM3 panel to LM4 visualization: %w", panel.Title, err)
 			}
 
@@ -53,7 +60,7 @@ func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query) (*visualizatio
 	var err error
 	params.VisualizationType, err = visualisationTypeDiscovery(panel, params.Queries)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("discovering visualization type: %w", err)
 	}
 
 	params.Title = panel.Title
