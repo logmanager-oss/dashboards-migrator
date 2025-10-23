@@ -32,7 +32,7 @@ func NewLM4Dashboard() *LM4Dashboard {
 	}
 }
 
-func (dashboard *LM4Dashboard) BuildDashboardObject() (*lm4.SavedObject, error) {
+func (dashboard *LM4Dashboard) BuildDashboardObject(title string) (*lm4.SavedObject, error) {
 	gridRaw, err := json.Marshal(dashboard.Panels)
 	if err != nil {
 		return nil, err
@@ -43,6 +43,7 @@ func (dashboard *LM4Dashboard) BuildDashboardObject() (*lm4.SavedObject, error) 
 		return nil, err
 	}
 
+	dashboard.savedObject.Attributes.Title = title
 	dashboard.savedObject.Attributes.PanelsJSON = string(gridRaw)
 	dashboard.savedObject.Attributes.KibanaSavedObjectMeta.SearchSourceJSON = string(searchRaw)
 	dashboard.savedObject.References = dashboard.References
