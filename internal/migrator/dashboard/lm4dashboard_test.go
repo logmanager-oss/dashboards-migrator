@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
+	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
@@ -197,12 +198,231 @@ func TestLM4Dashboard_BuildReferenceObject(t *testing.T) {
 				id:          uuid.New().String(),
 			}
 
-			panel := dashboard.buildReferenceObject(
+			panel := dashboard.buildVisualizationReferenceObject(
 				tt.id,
 				tt.refType,
 			)
 
 			assert.Equal(t, tt.expected, panel)
+		})
+	}
+}
+
+func TestLM4Dashboard_MigrateFilters(t *testing.T) {
+	tests := []struct {
+		name     string
+		filter   []lm3.GlobalFilter
+		expected []lm4.GlobalFilter
+	}{
+		{
+			name: "Test case 1",
+			filter: []lm3.GlobalFilter{
+				{
+					Type:    "field",
+					Field:   "meta.tags",
+					Query:   "\"fortigate\"",
+					Mandate: "must",
+					Active:  true,
+					Alias:   "",
+					ID:      1,
+				},
+			},
+			expected: []lm4.GlobalFilter{
+				{
+					Meta: lm4.GlobalFilterMeta{
+						Alias:    nil,
+						Negate:   false,
+						Disabled: false,
+						Type:     "phrase",
+						Key:      "meta.tags",
+						Params: struct {
+							Query string "json:\"query\""
+						}{
+							Query: "\"fortigate\"",
+						},
+						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
+					},
+					Query: lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"meta.tags": "\"fortigate\""},
+					},
+					State: map[string]string{"store": "appState"},
+				},
+			},
+		},
+		{
+			name: "Test case 2 - disabled filter",
+			filter: []lm3.GlobalFilter{
+				{
+					Type:    "field",
+					Field:   "meta.tags",
+					Query:   "\"fortigate\"",
+					Mandate: "must",
+					Active:  false,
+					Alias:   "",
+					ID:      1,
+				},
+			},
+			expected: []lm4.GlobalFilter{
+				{
+					Meta: lm4.GlobalFilterMeta{
+						Alias:    nil,
+						Negate:   false,
+						Disabled: true,
+						Type:     "phrase",
+						Key:      "meta.tags",
+						Params: struct {
+							Query string "json:\"query\""
+						}{
+							Query: "\"fortigate\"",
+						},
+						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
+					},
+					Query: lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"meta.tags": "\"fortigate\""},
+					},
+					State: map[string]string{"store": "appState"},
+				},
+			},
+		},
+		{
+			name: "Test case 3 - mandate negated",
+			filter: []lm3.GlobalFilter{
+				{
+					Type:    "field",
+					Field:   "meta.tags",
+					Query:   "\"fortigate\"",
+					Mandate: "mustNot",
+					Active:  true,
+					Alias:   "",
+					ID:      1,
+				},
+			},
+			expected: []lm4.GlobalFilter{
+				{
+					Meta: lm4.GlobalFilterMeta{
+						Alias:    nil,
+						Negate:   true,
+						Disabled: false,
+						Type:     "phrase",
+						Key:      "meta.tags",
+						Params: struct {
+							Query string "json:\"query\""
+						}{
+							Query: "\"fortigate\"",
+						},
+						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
+					},
+					Query: lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"meta.tags": "\"fortigate\""},
+					},
+					State: map[string]string{"store": "appState"},
+				},
+			},
+		},
+		{ // nolint:dupl
+			name: "Test case 4 - multiple filters",
+			filter: []lm3.GlobalFilter{
+				{
+					Type:    "field",
+					Field:   "meta.tags",
+					Query:   "\"fortigate\"",
+					Mandate: "must",
+					Active:  true,
+					Alias:   "",
+					ID:      1,
+				},
+				{
+					Type:    "field",
+					Field:   "msg.type",
+					Query:   "\"traffic\"",
+					Mandate: "must",
+					Active:  true,
+					Alias:   "",
+					ID:      2,
+				},
+			},
+			expected: []lm4.GlobalFilter{
+				{
+					Meta: lm4.GlobalFilterMeta{
+						Alias:    nil,
+						Negate:   false,
+						Disabled: false,
+						Type:     "phrase",
+						Key:      "meta.tags",
+						Params: struct {
+							Query string "json:\"query\""
+						}{
+							Query: "\"fortigate\"",
+						},
+						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
+					},
+					Query: lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"meta.tags": "\"fortigate\""},
+					},
+					State: map[string]string{"store": "appState"},
+				},
+				{
+					Meta: lm4.GlobalFilterMeta{
+						Alias:    nil,
+						Negate:   false,
+						Disabled: false,
+						Type:     "phrase",
+						Key:      "msg.type",
+						Params: struct {
+							Query string "json:\"query\""
+						}{
+							Query: "\"traffic\"",
+						},
+						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[1].meta.index",
+					},
+					Query: lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"msg.type": "\"traffic\""},
+					},
+					State: map[string]string{"store": "appState"},
+				},
+			},
+		},
+		{ // nolint:dupl
+			name: "Test case 5 - querystring filter type",
+			filter: []lm3.GlobalFilter{
+				{
+					Type:    "querystring",
+					Query:   "*",
+					Mandate: "must",
+					Active:  true,
+					Alias:   "",
+					ID:      1,
+				},
+			},
+			expected: []lm4.GlobalFilter{
+				{
+					Meta: lm4.GlobalFilterMeta{
+						Alias:        nil,
+						Negate:       false,
+						Disabled:     false,
+						Type:         "query_string",
+						Key:          "query",
+						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
+					},
+					Query: lm4.GlobalFilterQuery{
+						QueryString: map[string]string{"query": "*"},
+					},
+					State: map[string]string{"store": "appState"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := &LM4Dashboard{
+				savedObject: objects.GetDefaultDashboardSavedObject(),
+				search:      objects.GetDefaultSearchObject(false),
+				id:          uuid.New().String(),
+			}
+
+			got := dashboard.migrateFilters(tt.filter, "")
+
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }

@@ -8,7 +8,7 @@ func GetDefaultSearchObject(withRef bool) *lm4.SearchSourceJSON {
 			Language: "kuery",
 			Query:    "",
 		},
-		Filter: []map[string]interface{}{},
+		Filter: []lm4.GlobalFilter{},
 	}
 
 	if withRef {
