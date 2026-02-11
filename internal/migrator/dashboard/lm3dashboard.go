@@ -1,3 +1,4 @@
+// Package dashboard handles parsing and construction of LM3 and LM4 dashboards.
 package dashboard
 
 import (

@@ -1,3 +1,4 @@
+// Package lm4 provides type definitions for Logmanager 4 dashboard objects.
 package lm4
 
 import "time"
