@@ -82,8 +82,10 @@ func (c *Config) validateOutputPath(flagValue string) error {
 }
 
 func (c *Config) validateIndexPattern(flagValue string) error {
-	if !strings.HasPrefix(flagValue, "lm-") {
-		return fmt.Errorf("index-pattern must begin with \"lm-\" prefix")
+	if flagValue != "" {
+		if !strings.HasPrefix(flagValue, "lm-") {
+			return fmt.Errorf("index-pattern must begin with \"lm-\" prefix")
+		}
 	}
 
 	return nil

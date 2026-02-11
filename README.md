@@ -32,6 +32,8 @@ Usage of ./dashboards-migrator:
         Path to output file containing LM4 dashboard (Mandatory)
 ```
 
+If you used `ip` flag you need to make sure **before** importing your migrated dashboard that related index and index-pattern exists.
+
 **Examples:**
 
 1. Read LM3 dashboard from `log-overview.json` file, set index-pattern to `lm-*` and output migration results to `log-overview.ndjson`

@@ -62,10 +62,16 @@ func (vis *LM4Visualization) migrateQueries(lm3queries []lm3.Query) {
 			continue
 		}
 
-		queries = append(queries, query.Query)
+		queries = append(queries, fixGroupedValues(query.Query))
 	}
 
 	vis.Search.Query.Query = strings.Join(queries, " or ")
+}
+
+// fixGroupedValues inserts OR between space-separated quoted values in a Lucene query.
+// e.g. field:("val1" "val2") becomes field:("val1" OR "val2")
+func fixGroupedValues(query string) string {
+	return strings.ReplaceAll(query, `" "`, `" OR "`)
 }
 
 func (vis *LM4Visualization) migrateConfig(field string, size int, columns []string, visualizationType objects.VisType) {
