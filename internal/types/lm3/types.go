@@ -1,3 +1,4 @@
+// Package lm3 provides type definitions for Logmanager 3 dashboard objects.
 package lm3
 
 type BaseObject struct {

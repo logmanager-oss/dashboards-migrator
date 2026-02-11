@@ -1,3 +1,4 @@
+// Package writer provides functionality for writing output files.
 package writer
 
 import (
@@ -5,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 )
 
 type OutputWriter struct {
@@ -16,7 +18,7 @@ func NewWriter(path string) (*OutputWriter, error) {
 	var outputFile *os.File
 	var err error
 	if path != "" {
-		outputFile, err = os.Create(path)
+		outputFile, err = os.Create(filepath.Clean(path))
 		if err != nil {
 			return nil, fmt.Errorf("opening output file for writing: %w", err)
 		}

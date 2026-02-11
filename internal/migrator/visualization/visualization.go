@@ -1,3 +1,4 @@
+// Package visualization handles migration of LM3 panel visualizations to LM4 format.
 package visualization
 
 import (

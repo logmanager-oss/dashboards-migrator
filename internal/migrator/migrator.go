@@ -1,3 +1,4 @@
+// Package migrator orchestrates the migration of dashboards from LM3 to LM4.
 package migrator
 
 import (

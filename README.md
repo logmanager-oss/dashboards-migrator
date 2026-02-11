@@ -38,16 +38,34 @@ Usage of ./dashboards-migrator:
 
 `./dashboards-migrator -i log-overview.json -o log-overview.ndjson -ip lm-*`
 
-**Release**
+## Development
+
+A `Makefile` is provided for common development tasks:
+
+```bash
+make build   # Build the binary
+make test    # Run tests with race detector
+make lint    # Run golangci-lint
+make vuln    # Run vulnerability check
+make clean   # Remove built binary
+```
+
+### Prerequisites
+
+- [Go](https://go.dev/) 1.24+
+- [golangci-lint](https://golangci-lint.run/) (for linting)
+- [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) (for vulnerability checking)
+
+## Release
 
 Go to: https://github.com/logmanager-oss/dashboards-migrator/releases to grab latest version of Dashboards Migrator. It is available for Windows, Linux and MacOS (x86_64/Arm64).
 
-We are using Goreleaser (https://goreleaser.com) for building Dashboards Migrator release file.
+We are using [Goreleaser](https://goreleaser.com) for building Dashboards Migrator release files.
 
-If you wish to create your own release do the following:
+If you wish to create your own build:
 
 1. Clone the repository
-2. Run CGO_ENABLED=0 GOOS=<your_target_OS> GOARCH=<your_target_CPU_architecture> go build -o <filename> ./cmd/main.go
+2. Run `make build` or `CGO_ENABLED=0 GOOS=<your_target_OS> GOARCH=<your_target_CPU_architecture> go build -o <filename> ./cmd/main.go`
 
 You can also install Dashboard Migrator to your system by running:
 
