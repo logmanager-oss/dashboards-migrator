@@ -12,6 +12,81 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
+func TestMigrateQueries_GroupedValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		queries  []lm3.Query
+		expected string
+	}{
+		{
+			name: "single query with space-separated grouped values",
+			queries: []lm3.Query{
+				{
+					ID:     0,
+					Type:   "lucene",
+					Query:  `msg.event_type:("Audit_Event" "Audit Event")`,
+					Enable: true,
+				},
+			},
+			expected: `msg.event_type:("Audit_Event" OR "Audit Event")`,
+		},
+		{
+			name: "multiple queries with space-separated grouped values",
+			queries: []lm3.Query{
+				{
+					ID:     0,
+					Type:   "lucene",
+					Query:  `msg.event_type:("Audit_Event" "Audit Event")`,
+					Enable: true,
+				},
+				{
+					ID:     1,
+					Type:   "lucene",
+					Query:  `msg.event_type:("Threat_Event" "Threat Event")`,
+					Enable: true,
+				},
+			},
+			expected: `msg.event_type:("Audit_Event" OR "Audit Event") or msg.event_type:("Threat_Event" OR "Threat Event")`,
+		},
+		{
+			name: "query with NOT and space-separated grouped values",
+			queries: []lm3.Query{
+				{
+					ID:     0,
+					Type:   "lucene",
+					Query:  `NOT msg.event_type:("Audit_Event" "Audit Event" "Threat_Event" "Threat Event")`,
+					Enable: true,
+				},
+			},
+			expected: `NOT msg.event_type:("Audit_Event" OR "Audit Event" OR "Threat_Event" OR "Threat Event")`,
+		},
+		{
+			name: "query without grouped values is unchanged",
+			queries: []lm3.Query{
+				{
+					ID:     0,
+					Type:   "lucene",
+					Query:  "meta.tags:loginsuccess",
+					Enable: true,
+				},
+			},
+			expected: "meta.tags:loginsuccess",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vis := &LM4Visualization{
+				Search: objects.GetDefaultSearchObject(true),
+			}
+
+			vis.migrateQueries(tt.queries)
+
+			assert.Equal(t, tt.expected, vis.Search.Query.Query)
+		})
+	}
+}
+
 func TestMigrator_migrateVisualizations(t *testing.T) {
 	tests := []struct {
 		name              string
