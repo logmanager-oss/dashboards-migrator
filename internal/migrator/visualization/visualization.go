@@ -58,8 +58,8 @@ func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, err
 }
 
 var (
-	rawBeforeColon = regexp.MustCompile(`\.raw(\s*:)`)
-	rawAfterExists = regexp.MustCompile(`(_exists_:\s*[^\s()]+?)\.raw\b`)
+	_rawBeforeColon = regexp.MustCompile(`\.raw(\s*:)`)
+	_rawAfterExists = regexp.MustCompile(`(_exists_:\s*[^\s()]+?)\.raw\b`)
 )
 
 // StripRaw removes the LM3 ".raw" suffix from a field name.
@@ -69,8 +69,8 @@ func StripRaw(field string) string {
 
 // NormalizeLucene strips the LM3 ".raw" field suffix, which LM4 fields do not have.
 func NormalizeLucene(q string) string {
-	q = rawBeforeColon.ReplaceAllString(q, "$1")
-	return rawAfterExists.ReplaceAllString(q, "$1")
+	q = _rawBeforeColon.ReplaceAllString(q, "$1")
+	return _rawAfterExists.ReplaceAllString(q, "$1")
 }
 
 func (vis *LM4Visualization) migrateQueries(lm3queries []lm3.Query) {
