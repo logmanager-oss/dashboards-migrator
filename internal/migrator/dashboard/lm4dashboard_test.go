@@ -1,10 +1,10 @@
 package dashboard
 
 import (
+	"cmp"
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,6 +17,7 @@ func TestLM4Dashboard_CalculateGridPosition(t *testing.T) {
 	tests := []struct {
 		name                string
 		span                int
+		currentRowHeight    int
 		currentGridPosition struct {
 			X int
 			Y int
@@ -99,18 +100,77 @@ func TestLM4Dashboard_CalculateGridPosition(t *testing.T) {
 				H: 15,
 			},
 		},
+		{
+			name:             "Test calculate grid position - row height is used for H and wrap",
+			span:             12,
+			currentRowHeight: 12,
+			currentGridPosition: struct {
+				X int
+				Y int
+			}{
+				X: 48,
+				Y: 15,
+			},
+			expected: &lm4.GridData{
+				X: 0,
+				Y: 27,
+				W: 48,
+				H: 12,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dashboard := &LM4Dashboard{
 				savedObject:         objects.GetDefaultDashboardSavedObject(),
 				search:              objects.GetDefaultSearchObject(false),
-				id:                  uuid.New().String(),
+				currentRowHeight:    cmp.Or(tt.currentRowHeight, objects.DefaultVisHeight),
 				currentGridPosition: tt.currentGridPosition,
 			}
 			grid := dashboard.calculateGridPosition(tt.span)
 
 			assert.Equal(t, tt.expected, grid)
+		})
+	}
+}
+
+func TestLM4Dashboard_StartRow(t *testing.T) {
+	tests := []struct {
+		name           string
+		x, y           int
+		height         string
+		expectedX      int
+		expectedY      int
+		expectedHeight int
+	}{
+		{name: "mid-line starts a new line below the previous row", x: 20, y: 15, height: "350px", expectedX: 0, expectedY: 30, expectedHeight: 18},
+		{name: "start of line stays in place", x: 0, y: 0, height: "150px", expectedX: 0, expectedY: 0, expectedHeight: 12},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := &LM4Dashboard{currentRowHeight: objects.DefaultVisHeight}
+			dashboard.currentGridPosition.X = tt.x
+			dashboard.currentGridPosition.Y = tt.y
+
+			dashboard.StartRow(tt.height)
+
+			assert.Equal(t, tt.expectedX, dashboard.currentGridPosition.X)
+			assert.Equal(t, tt.expectedY, dashboard.currentGridPosition.Y)
+			assert.Equal(t, tt.expectedHeight, dashboard.currentRowHeight)
+		})
+	}
+}
+
+func Test_rowHeight(t *testing.T) {
+	tests := []struct {
+		px       string
+		expected int
+	}{
+		{"garbage", objects.DefaultVisHeight},
+	}
+	for _, tt := range tests {
+		t.Run(tt.px, func(t *testing.T) {
+			assert.Equal(t, tt.expected, rowHeight(tt.px))
 		})
 	}
 }
@@ -157,7 +217,7 @@ func TestLM4Dashboard_BuildPanelObject(t *testing.T) {
 			dashboard := &LM4Dashboard{
 				savedObject:         objects.GetDefaultDashboardSavedObject(),
 				search:              objects.GetDefaultSearchObject(false),
-				id:                  uuid.New().String(),
+				currentRowHeight:    objects.DefaultVisHeight,
 				currentGridPosition: tt.currentGridPosition,
 			}
 			grid := dashboard.calculateGridPosition(tt.span)
@@ -197,7 +257,6 @@ func TestLM4Dashboard_BuildReferenceObject(t *testing.T) {
 			dashboard := &LM4Dashboard{
 				savedObject: objects.GetDefaultDashboardSavedObject(),
 				search:      objects.GetDefaultSearchObject(false),
-				id:          uuid.New().String(),
 			}
 
 			panel := dashboard.buildVisualizationReferenceObject(
@@ -505,7 +564,6 @@ func TestLM4Dashboard_MigrateFilters(t *testing.T) {
 			dashboard := &LM4Dashboard{
 				savedObject:      objects.GetDefaultDashboardSavedObject(),
 				search:           objects.GetDefaultSearchObject(false),
-				id:               uuid.New().String(),
 				currentRefNumber: tt.currentRefNumber,
 			}
 

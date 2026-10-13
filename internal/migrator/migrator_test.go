@@ -160,6 +160,7 @@ func Test_gatherMigrationParams(t *testing.T) {
 					"meta.src.ip",
 					"raw",
 				},
+				Sort: []string{"status.raw", "asc"},
 			},
 			queries: []lm3.Query{
 				{
@@ -182,6 +183,7 @@ func Test_gatherMigrationParams(t *testing.T) {
 					"meta.src.ip",
 					"raw",
 				},
+				Sort:              []string{"status.raw", "asc"},
 				VisualizationType: &objects.LogOverview{},
 				Metric:            "count",
 				Span:              12,
@@ -487,6 +489,18 @@ func TestMigrate(t *testing.T) {
 				assert.Equal(t, "# Hello", visState.Params.Markdown)
 				assert.Contains(t, output[0].Attributes.VisState, `"times":[]`)
 				assert.NotContains(t, output[0].Attributes.KibanaSavedObjectMeta.SearchSourceJSON, "indexRefName")
+			},
+		},
+		{
+			name: "dashboard with every panel skipped emits empty arrays",
+			panels: []lm3.Panel{
+				{Type: "text", Mode: "html", Title: "Html"},
+			},
+			verify: func(t *testing.T, output []lm4.SavedObject) {
+				require.Len(t, output, 1)
+				assert.Equal(t, "[]", output[0].Attributes.PanelsJSON)
+				assert.NotNil(t, output[0].References)
+				assert.Empty(t, output[0].References)
 			},
 		},
 	}

@@ -21,6 +21,7 @@ func Migrate(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Da
 	var output []lm4.SavedObject
 
 	for _, row := range lm3Dashboard.Rows {
+		lm4Dashboard.StartRow(row.Height)
 		for _, panel := range row.Panels {
 			params, err := gatherMigrationParams(&panel, lm3Dashboard.GetPanelQueries(&panel), indexPattern)
 			if err != nil {
@@ -75,6 +76,7 @@ func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query, indexPattern s
 		params.FieldSize = params.Queries[0].Size
 	case *objects.LogOverview:
 		params.Columns = panel.Fields
+		params.Sort = panel.Sort
 	case *objects.Markdown:
 		params.Content = panel.Content
 	default:

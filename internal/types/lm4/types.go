@@ -25,7 +25,7 @@ type Attributes struct {
 	VisState              string                `json:"visState,omitempty"`
 	UIStateJSON           string                `json:"uiStateJSON,omitempty"`
 	Columns               []string              `json:"columns,omitempty"`
-	Sort                  []interface{}         `json:"sort,omitempty"`
+	Sort                  []interface{}         `json:"sort,omitzero"`
 }
 
 type Reference struct {
