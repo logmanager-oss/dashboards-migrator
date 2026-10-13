@@ -144,6 +144,8 @@ type VisStateParams struct {
 	AddLegend               bool                     `json:"addLegend,omitempty"`
 	LegendPosition          string                   `json:"legendPosition,omitempty"`
 	Times                   []interface{}            `json:"times"`
+	FontSize                int                      `json:"fontSize,omitempty"`
+	Markdown                string                   `json:"markdown,omitempty"`
 	AddTimeMarker           bool                     `json:"addTimeMarker,omitempty"`
 	Labels                  map[string]interface{}   `json:"labels,omitempty"`
 	ThresholdLine           map[string]interface{}   `json:"thresholdLine,omitempty"`

@@ -420,15 +420,14 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			params := &MigrationParams{
-				tt.title,
-				tt.field,
-				tt.size,
-				tt.queries,
-				tt.columns,
-				tt.visualizationType,
-				uuid.New().String(),
-				0,
-				tt.indexPattern,
+				Title:             tt.title,
+				Field:             tt.field,
+				FieldSize:         tt.size,
+				Queries:           tt.queries,
+				Columns:           tt.columns,
+				VisualizationType: tt.visualizationType,
+				ID:                uuid.New().String(),
+				IndexPattern:      tt.indexPattern,
 			}
 
 			actualSavedObject, err := MigratePanelToVisualization(params)
