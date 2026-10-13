@@ -1,11 +1,13 @@
 package visualization
 
 import (
+	"cmp"
 	"encoding/json"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
@@ -89,6 +91,8 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		size              int
 		expected          string
 		columns           []string
+		metric            string
+		metricField       string
 	}{
 		{
 			name:              "Test case: migrate panel: events over time",
@@ -280,6 +284,27 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 			expected: `{"attributes":{"description":"","kibanaSavedObjectMeta":{"searchSourceJSON":"{\"query\":{\"query\":\"\",\"language\":\"lucene\"},\"filter\":[],\"indexRefName\":\"kibanaSavedObjectMeta.searchSourceJSON.index\"}"},"title":"Vertical Graph","uiStateJSON":"{}","version":1,"visState":"{\"title\":\"Vertical Graph\",\"type\":\"histogram\",\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"field\":\"\",\"orderBy\":\"\",\"order\":\"\",\"size\":0,\"otherBucket\":false,\"otherBucketLabel\":\"\",\"missingBucket\":false,\"missingBucketLabel\":\"\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"msg.command\",\"orderBy\":\"1\",\"order\":\"desc\",\"size\":10,\"otherBucket\":true,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\"}}],\"params\":{\"type\":\"histogram\",\"grid\":{\"categoryLines\":true,\"valueAxis\":\"ValueAxis-1\"},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"top\",\"show\":false,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"filter\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\"},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Count\"}}],\"seriesParams\":[{\"show\":true,\"type\":\"histogram\",\"mode\":\"normal\",\"data\":{\"label\":\"Count\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\",\"drawLinesBetweenPoints\":true,\"lineWidth\":2,\"showCircles\":true}],\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"top\",\"times\":[],\"addTimeMarker\":false,\"labels\":{\"show\":true},\"thresholdLine\":{\"show\":false,\"value\":10,\"width\":1,\"style\":\"full\",\"color\":\"#E7664C\"}}}"},"id":"","migrationVersion":{"visualization":"7.10.0"},"references":[{"id":"test","name":"kibanaSavedObjectMeta.searchSourceJSON.index","type":"index-pattern"}],"type":"visualization","updated_at":"0001-01-01T00:00:00Z","version":""}`,
 		},
 		{
+			name:              "Test case: migrate panel: vertical graph with sum metric",
+			title:             "Vertical Graph",
+			indexPattern:      "test",
+			visualizationType: &objects.VerticalGraph{},
+			queries: []lm3.Query{
+				{
+					ID:     0,
+					Type:   "lucene",
+					Query:  "*",
+					Alias:  "",
+					Color:  "",
+					Pin:    false,
+					Enable: true,
+				},
+			},
+			field:  "msg.command",
+			size:   10,
+			metric: "sum", metricField: "msg.rcvd_byte@int.value",
+			expected: `{"attributes":{"description":"","kibanaSavedObjectMeta":{"searchSourceJSON":"{\"query\":{\"query\":\"\",\"language\":\"lucene\"},\"filter\":[],\"indexRefName\":\"kibanaSavedObjectMeta.searchSourceJSON.index\"}"},"title":"Vertical Graph","uiStateJSON":"{}","version":1,"visState":"{\"title\":\"Vertical Graph\",\"type\":\"histogram\",\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"sum\",\"schema\":\"metric\",\"params\":{\"field\":\"msg.rcvd_byte@int.value\",\"orderBy\":\"\",\"order\":\"\",\"size\":0,\"otherBucket\":false,\"otherBucketLabel\":\"\",\"missingBucket\":false,\"missingBucketLabel\":\"\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"msg.command\",\"orderBy\":\"1\",\"order\":\"desc\",\"size\":10,\"otherBucket\":true,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\"}}],\"params\":{\"type\":\"histogram\",\"grid\":{\"categoryLines\":true,\"valueAxis\":\"ValueAxis-1\"},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"top\",\"show\":false,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"filter\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\"},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Sum of msg.rcvd_byte@int.value\"}}],\"seriesParams\":[{\"show\":true,\"type\":\"histogram\",\"mode\":\"normal\",\"data\":{\"label\":\"Sum of msg.rcvd_byte@int.value\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\",\"drawLinesBetweenPoints\":true,\"lineWidth\":2,\"showCircles\":true}],\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"top\",\"times\":[],\"addTimeMarker\":false,\"labels\":{\"show\":true},\"thresholdLine\":{\"show\":false,\"value\":10,\"width\":1,\"style\":\"full\",\"color\":\"#E7664C\"}}}"},"id":"","migrationVersion":{"visualization":"7.10.0"},"references":[{"id":"test","name":"kibanaSavedObjectMeta.searchSourceJSON.index","type":"index-pattern"}],"type":"visualization","updated_at":"0001-01-01T00:00:00Z","version":""}`,
+		},
+		{
 			name:              "Test case: migrate panel: vertical graph with filters",
 			title:             "Vertical Graph With Filters",
 			indexPattern:      "test",
@@ -418,6 +443,8 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 				VisualizationType: tt.visualizationType,
 				ID:                uuid.New().String(),
 				IndexPattern:      tt.indexPattern,
+				Metric:            cmp.Or(tt.metric, "count"),
+				MetricField:       tt.metricField,
 			}
 
 			actualSavedObject, err := MigratePanelToVisualization(params)
@@ -444,6 +471,13 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 			}
 
 			assert.Equal(t, expectedSearch, actualSearch)
+
+			if expectedSavedObject.Attributes.VisState != "" {
+				var actualVisState, expectedVisState lm4.VisState
+				require.NoError(t, json.Unmarshal([]byte(actualSavedObject.Attributes.VisState), &actualVisState))
+				require.NoError(t, json.Unmarshal([]byte(expectedSavedObject.Attributes.VisState), &expectedVisState))
+				assert.Equal(t, expectedVisState, actualVisState)
+			}
 
 			// Comparation of saved objects happens without nested visState and KibanaSavedObjectMeta objects since we are unable to predict order of keys in marshalled structs.
 			// As such those objects are compared separately (above)

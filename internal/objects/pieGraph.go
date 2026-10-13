@@ -35,27 +35,19 @@ func (pg *PieGraph) GetDefaultVisualizationSavedObject(indexPattern string) *lm4
 	}
 }
 
-func (pg *PieGraph) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
+func (pg *PieGraph) GetVisualizationConfig(cfg AggConfig) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
-		{
-			ID:      "1",
-			Enabled: true,
-			Type:    "count",
-			Params: lm4.VisStateAggsParams{
-				Filters: []lm4.Filter{},
-			},
-			Schema: "metric",
-		},
+		metricAgg(cfg),
 		{
 			ID:      "2",
 			Enabled: true,
 			Type:    "terms",
 			Schema:  "segment",
 			Params: lm4.VisStateAggsParams{
-				Field:              field,
+				Field:              cfg.Field,
 				OrderBy:            "1",
 				Order:              "desc",
-				Size:               size,
+				Size:               cfg.Size,
 				OtherBucket:        true,
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,

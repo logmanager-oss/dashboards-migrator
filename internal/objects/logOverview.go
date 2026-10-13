@@ -36,7 +36,7 @@ func (lo *LogOverview) GetDefaultVisualizationSavedObject(indexPattern string) *
 	}
 }
 
-func (lo *LogOverview) GetVisualizationConfig(string, int) []lm4.VisStateAggs {
+func (lo *LogOverview) GetVisualizationConfig(AggConfig) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{}
 }
 

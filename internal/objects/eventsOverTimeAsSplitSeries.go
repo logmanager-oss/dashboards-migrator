@@ -35,17 +35,9 @@ func (e *EventsOverTimeAsSplitSeries) GetDefaultVisualizationSavedObject(indexPa
 	}
 }
 
-func (e *EventsOverTimeAsSplitSeries) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
+func (e *EventsOverTimeAsSplitSeries) GetVisualizationConfig(cfg AggConfig) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
-		{
-			ID:      "1",
-			Enabled: true,
-			Type:    "count",
-			Params: lm4.VisStateAggsParams{
-				Filters: []lm4.Filter{},
-			},
-			Schema: "metric",
-		},
+		metricAgg(cfg),
 		{
 			ID:      "2",
 			Enabled: true,
@@ -71,10 +63,10 @@ func (e *EventsOverTimeAsSplitSeries) GetVisualizationConfig(field string, size 
 			Type:    "terms",
 			Schema:  "group",
 			Params: lm4.VisStateAggsParams{
-				Field:              field,
+				Field:              cfg.Field,
 				OrderBy:            "1",
 				Order:              "desc",
-				Size:               size,
+				Size:               cfg.Size,
 				OtherBucket:        true,
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,

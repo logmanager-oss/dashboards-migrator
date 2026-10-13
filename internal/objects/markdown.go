@@ -21,7 +21,7 @@ func (m *Markdown) GetDefaultVisualizationSavedObject(string) *lm4.SavedObject {
 	}
 }
 
-func (m *Markdown) GetVisualizationConfig(string, int) []lm4.VisStateAggs {
+func (m *Markdown) GetVisualizationConfig(AggConfig) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{}
 }
 

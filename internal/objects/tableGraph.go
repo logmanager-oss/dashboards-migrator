@@ -35,26 +35,18 @@ func (tg *TableGraph) GetDefaultVisualizationSavedObject(indexPattern string) *l
 	}
 }
 
-func (tg *TableGraph) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
+func (tg *TableGraph) GetVisualizationConfig(cfg AggConfig) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
-		{
-			ID:      "1",
-			Enabled: true,
-			Type:    "count",
-			Params: lm4.VisStateAggsParams{
-				Filters: []lm4.Filter{},
-			},
-			Schema: "metric",
-		},
+		metricAgg(cfg),
 		{
 			ID:      "2",
 			Enabled: true,
 			Type:    "terms",
 			Params: lm4.VisStateAggsParams{
-				Field:              field,
+				Field:              cfg.Field,
 				OrderBy:            "1",
 				Order:              "desc",
-				Size:               size,
+				Size:               cfg.Size,
 				OtherBucket:        true,
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,
