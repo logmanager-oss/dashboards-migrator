@@ -18,6 +18,7 @@ type MigrationParams struct {
 	FieldSize         int
 	Queries           []lm3.Query
 	Columns           []string
+	Sort              []string
 	VisualizationType objects.VisType
 	ID                string
 	Span              int
@@ -50,13 +51,7 @@ func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, err
 	} else if len(params.Filters) == 0 {
 		vis.migrateQueries(params.Queries)
 	}
-	vis.migrateConfig(objects.AggConfig{
-		Field:       params.Field,
-		Size:        params.FieldSize,
-		Metric:      params.Metric,
-		MetricField: params.MetricField,
-		Filters:     params.Filters,
-	}, params.Columns, params.VisualizationType)
+	vis.migrateConfig(params)
 	vis.migrateTitles(params.Title)
 	vis.SavedObject.ID = params.ID
 
@@ -114,10 +109,34 @@ func (vis *LM4Visualization) migrateQueries(lm3queries []lm3.Query) {
 	vis.Search.Query.Query = strings.Join(queries, " OR ")
 }
 
-func (vis *LM4Visualization) migrateConfig(cfg objects.AggConfig, columns []string, visualizationType objects.VisType) {
-	vis.VisState.Aggs = visualizationType.GetVisualizationConfig(cfg)
-	vis.SavedObject.Attributes.Columns = columns
+func (vis *LM4Visualization) migrateConfig(params *MigrationParams) {
+	cfg := objects.AggConfig{
+		Field:       params.Field,
+		Size:        params.FieldSize,
+		Metric:      params.Metric,
+		MetricField: params.MetricField,
+		Filters:     params.Filters,
+	}
+	vis.VisState.Aggs = params.VisualizationType.GetVisualizationConfig(cfg)
+	vis.SavedObject.Attributes.Columns = params.Columns
+	vis.migrateSort(params.Sort)
 	vis.migrateSeriesLabel(objects.MetricLabel(cfg))
+}
+
+// migrateSort keeps the saved-search sort empty for "@timestamp desc", the LM4 default,
+// and for a direction OpenSearch would reject.
+func (vis *LM4Visualization) migrateSort(sort []string) {
+	if len(sort) != 2 {
+		return
+	}
+	field, dir := StripRaw(sort[0]), sort[1]
+	if dir != "asc" && dir != "desc" {
+		return
+	}
+	if field == "@timestamp" && dir == "desc" {
+		return
+	}
+	vis.SavedObject.Attributes.Sort = []interface{}{[]interface{}{field, dir}}
 }
 
 // migrateSeriesLabel sets the series and value-axis label. It does nothing without series params.

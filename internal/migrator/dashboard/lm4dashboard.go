@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualization"
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
@@ -18,7 +17,7 @@ type LM4Dashboard struct {
 	savedObject         *lm4.SavedObject
 	search              *lm4.SearchSourceJSON
 	Panels              []lm4.PanelJSON
-	id                  string
+	currentRowHeight    int
 	currentGridPosition struct {
 		X int
 		Y int
@@ -29,9 +28,9 @@ type LM4Dashboard struct {
 
 func NewLM4Dashboard() *LM4Dashboard {
 	return &LM4Dashboard{
-		savedObject: objects.GetDefaultDashboardSavedObject(),
-		search:      objects.GetDefaultSearchObject(false),
-		id:          uuid.New().String(),
+		savedObject:      objects.GetDefaultDashboardSavedObject(),
+		search:           objects.GetDefaultSearchObject(false),
+		currentRowHeight: objects.DefaultVisHeight,
 	}
 }
 
@@ -76,12 +75,34 @@ func (dashboard *LM4Dashboard) LinkVisualizationToDashboardObject(params *visual
 	dashboard.currentRefNumber++
 }
 
+// StartRow makes the next visualization start on a new line, as every LM3 row does, and sets its height.
+func (dashboard *LM4Dashboard) StartRow(height string) {
+	if dashboard.currentGridPosition.X > 0 {
+		dashboard.newLine()
+	}
+	dashboard.currentRowHeight = rowHeight(height)
+}
+
+func (dashboard *LM4Dashboard) newLine() {
+	dashboard.currentGridPosition.X = 0
+	dashboard.currentGridPosition.Y += dashboard.currentRowHeight
+}
+
+// rowHeight converts an LM3 row height such as "150px" to OSD grid rows.
+func rowHeight(px string) int {
+	n, err := strconv.Atoi(strings.TrimSuffix(px, "px"))
+	if err != nil {
+		return objects.DefaultVisHeight
+	}
+
+	return max((n+objects.GridRowPx-1)/objects.GridRowPx, objects.MinVisHeight)
+}
+
 func (dashboard *LM4Dashboard) calculateGridPosition(span int) *lm4.GridData {
 	width := span * 4
 
 	if dashboard.currentGridPosition.X == objects.MaxRowWidth || dashboard.currentGridPosition.X+width > objects.MaxRowWidth {
-		dashboard.currentGridPosition.X = 0
-		dashboard.currentGridPosition.Y += objects.DefaultVisHeight
+		dashboard.newLine()
 	}
 
 	gridData := &lm4.GridData{
@@ -90,7 +111,7 @@ func (dashboard *LM4Dashboard) calculateGridPosition(span int) *lm4.GridData {
 	}
 
 	gridData.W = width
-	gridData.H = objects.DefaultVisHeight
+	gridData.H = dashboard.currentRowHeight
 	dashboard.currentGridPosition.X += gridData.W
 
 	return gridData

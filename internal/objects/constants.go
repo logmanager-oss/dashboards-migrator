@@ -3,5 +3,7 @@ package objects
 
 const (
 	DefaultVisHeight = 15
+	MinVisHeight     = 12
 	MaxRowWidth      = 48
+	GridRowPx        = 20
 )

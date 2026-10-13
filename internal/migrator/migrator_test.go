@@ -160,6 +160,7 @@ func Test_gatherMigrationParams(t *testing.T) {
 					"meta.src.ip",
 					"raw",
 				},
+				Sort: []string{"status.raw", "asc"},
 			},
 			queries: []lm3.Query{
 				{
@@ -182,6 +183,7 @@ func Test_gatherMigrationParams(t *testing.T) {
 					"meta.src.ip",
 					"raw",
 				},
+				Sort:              []string{"status.raw", "asc"},
 				VisualizationType: &objects.LogOverview{},
 				Metric:            "count",
 				Span:              12,

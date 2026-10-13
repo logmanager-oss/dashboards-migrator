@@ -14,6 +14,25 @@ import (
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
+func TestMigrateSort(t *testing.T) {
+	tests := []struct {
+		name     string
+		sort     []string
+		expected []interface{}
+	}{
+		{name: "default stays empty", sort: []string{"@timestamp", "desc"}},
+		{name: "unknown direction stays empty", sort: []string{"msg.uptime", "msg.desc"}},
+		{name: "raw suffix is stripped", sort: []string{"status.raw", "asc"}, expected: []interface{}{[]interface{}{"status", "asc"}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vis := &LM4Visualization{SavedObject: &lm4.SavedObject{}}
+			vis.migrateSort(tt.sort)
+			assert.Equal(t, tt.expected, vis.SavedObject.Attributes.Sort)
+		})
+	}
+}
+
 func TestMigrateQueries(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -91,6 +110,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 		size              int
 		expected          string
 		columns           []string
+		sort              []string
 		metric            string
 		metricField       string
 		filters           []lm4.Filter
@@ -184,6 +204,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 			title:             "Log Overview",
 			indexPattern:      "test",
 			visualizationType: &objects.LogOverview{},
+			sort:              []string{"@timestamp", "desc"},
 			queries: []lm3.Query{
 				{
 					ID:     0,
@@ -200,6 +221,29 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 				"raw",
 			},
 			expected: `{"attributes":{"columns":["meta.src.ip@ip.value","raw"],"description":"","hits":0,"kibanaSavedObjectMeta":{"searchSourceJSON":"{\"highlightAll\":true,\"version\":true,\"query\":{\"query\":\"\",\"language\":\"lucene\"},\"filter\":[],\"indexRefName\":\"kibanaSavedObjectMeta.searchSourceJSON.index\"}"},"sort":[],"title":"Log Overview","version":1},"id":"","migrationVersion":{"search":"7.9.3"},"references":[{"id":"test","name":"kibanaSavedObjectMeta.searchSourceJSON.index","type":"index-pattern"}],"type":"search","updated_at":"0001-01-01T00:00:00Z","version":""}`,
+		},
+		{
+			name:              "Test case: migrate panel: log overview with sort",
+			title:             "Log Overview Sorted",
+			indexPattern:      "test",
+			visualizationType: &objects.LogOverview{},
+			queries: []lm3.Query{
+				{
+					ID:     0,
+					Type:   "lucene",
+					Query:  "*",
+					Alias:  "",
+					Color:  "",
+					Pin:    false,
+					Enable: true,
+				},
+			},
+			columns: []string{
+				"meta.src.ip@ip.value",
+				"raw",
+			},
+			sort:     []string{"status.raw", "asc"},
+			expected: `{"attributes":{"columns":["meta.src.ip@ip.value","raw"],"description":"","hits":0,"kibanaSavedObjectMeta":{"searchSourceJSON":"{\"highlightAll\":true,\"version\":true,\"query\":{\"query\":\"\",\"language\":\"lucene\"},\"filter\":[],\"indexRefName\":\"kibanaSavedObjectMeta.searchSourceJSON.index\"}"},"sort":[["status","asc"]],"title":"Log Overview Sorted","version":1},"id":"","migrationVersion":{"search":"7.9.3"},"references":[{"id":"test","name":"kibanaSavedObjectMeta.searchSourceJSON.index","type":"index-pattern"}],"type":"search","updated_at":"0001-01-01T00:00:00Z","version":""}`,
 		},
 		{
 			name:              "Test case: migrate panel: log overview with filters",
@@ -458,6 +502,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 				FieldSize:         tt.size,
 				Queries:           tt.queries,
 				Columns:           tt.columns,
+				Sort:              tt.sort,
 				VisualizationType: tt.visualizationType,
 				ID:                uuid.New().String(),
 				IndexPattern:      tt.indexPattern,

@@ -26,7 +26,7 @@ func CLIStart() error {
 
 	jsonInput, err := reader.ReadFile(config.InputPath)
 	if err != nil {
-		return fmt.Errorf("reading file: '%s' failed: %w", jsonInput, err)
+		return fmt.Errorf("reading file: '%s' failed: %w", config.InputPath, err)
 	}
 
 	lm3Dashboard, err := dashboard.NewLM3Dashboard(jsonInput)
