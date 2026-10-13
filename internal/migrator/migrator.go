@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/google/uuid"
 
@@ -70,15 +69,14 @@ func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query, indexPattern s
 	switch params.VisualizationType.(type) {
 	case *objects.EventsOverTimeAsSplitSeries:
 		// EventsOverTimeAsSplitSeries can have only one query, so this is ok
-		params.Field = strings.TrimSuffix(params.Queries[0].Field, ".raw")
+		params.Field = visualization.StripRaw(params.Queries[0].Field)
 		params.FieldSize = params.Queries[0].Size
 	case *objects.LogOverview:
 		params.Columns = panel.Fields
 	case *objects.Markdown:
 		params.Content = panel.Content
 	default:
-		// we no longer use .raw field name convention so we need to strip it
-		params.Field = strings.TrimSuffix(panel.Field, ".raw")
+		params.Field = visualization.StripRaw(panel.Field)
 		params.FieldSize = panel.Size
 	}
 

@@ -3,6 +3,8 @@ package dashboard
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -115,53 +117,133 @@ func (dashboard *LM4Dashboard) buildVisualizationReferenceObject(id string, refT
 }
 
 func (dashboard *LM4Dashboard) migrateFilters(lm3filters []lm3.GlobalFilter, indexPattern string) []lm4.GlobalFilter {
-	var lm4filters []lm4.GlobalFilter
+	lm4filters := make([]lm4.GlobalFilter, 0, len(lm3filters))
+	var either []lm3.GlobalFilter
 
 	for _, lm3filter := range lm3filters {
-		indexRefName := fmt.Sprintf("kibanaSavedObjectMeta.searchSourceJSON.filter[%d].meta.index", dashboard.currentRefNumber)
-		lm4filter := objects.GetDefaultFilterObject(indexRefName)
-
-		if lm3filter.Alias != "" {
-			lm4filter.Meta.Alias = lm3filter.Alias
+		if lm3filter.Mandate == "either" {
+			either = append(either, lm3filter)
+			continue
 		}
-		if lm3filter.Mandate == "mustNot" {
-			lm4filter.Meta.Negate = true
-		}
-		if !lm3filter.Active {
-			lm4filter.Meta.Disabled = true
-		}
-
-		if lm3filter.Type == "querystring" {
-			lm4filter.Query.QueryString = map[string]string{"query": lm3filter.Query}
-			lm4filter.Meta.Type = "query_string"
-			lm4filter.Meta.Key = "query"
-		} else {
-			lm4filter.Meta.Params = struct {
-				Query string "json:\"query\""
-			}{
-				Query: "",
-			}
-
-			if lm3filter.Query != "" {
-				lm4filter.Meta.Params.Query = lm3filter.Query
-			} else {
-				lm4filter.Meta.Params.Query = string(lm3filter.Value)
-			}
-
-			lm4filter.Query.MatchPhrase = map[string]string{lm3filter.Field: lm4filter.Meta.Params.Query}
-
-			lm4filter.Meta.Type = "phrase"
-			lm4filter.Meta.Key = lm3filter.Field
-		}
-
-		lm4filters = append(lm4filters, *lm4filter)
-
-		ref := dashboard.buildFilterReferenceObject(indexPattern, indexRefName)
-		dashboard.references = append(dashboard.references, *ref)
-		dashboard.currentRefNumber++
+		lm4filters = dashboard.appendFilter(lm4filters, buildFilter(lm3filter), indexPattern)
 	}
 
-	return lm4filters
+	return dashboard.appendFilter(lm4filters, buildEitherFilter(either), indexPattern)
+}
+
+// appendFilter numbers the index reference by the filter's position, which is what OSD expects.
+func (dashboard *LM4Dashboard) appendFilter(filters []lm4.GlobalFilter, filter *lm4.GlobalFilter, indexPattern string) []lm4.GlobalFilter {
+	if filter == nil {
+		return filters
+	}
+
+	indexRefName := fmt.Sprintf("kibanaSavedObjectMeta.searchSourceJSON.filter[%d].meta.index", len(filters))
+	filter.Meta.IndexRefName = indexRefName
+	dashboard.references = append(dashboard.references, *dashboard.buildFilterReferenceObject(indexPattern, indexRefName))
+
+	return append(filters, *filter)
+}
+
+func buildFilter(f lm3.GlobalFilter) *lm4.GlobalFilter {
+	filter := objects.GetDefaultFilterObject("")
+	field := visualization.StripRaw(f.Field)
+
+	switch f.Type {
+	case "querystring":
+		setQueryString(filter, visualization.NormalizeLucene(f.Query))
+	case "exists":
+		filter.Exists = &lm4.ExistsFilter{Field: field}
+		filter.Meta.Type = "exists"
+		filter.Meta.Key = field
+		filter.Meta.Value = "exists"
+	case "field":
+		fieldFilter(filter, f, field)
+	case "terms":
+		setPhrase(filter, field, string(f.Value))
+	default:
+		slog.Warn("skipping global filter of unknown type", "type", f.Type, "id", f.ID)
+		return nil
+	}
+
+	if f.Alias != "" {
+		filter.Meta.Alias = f.Alias
+	}
+	filter.Meta.Negate = f.Mandate == "mustNot"
+	filter.Meta.Disabled = !f.Active
+
+	return filter
+}
+
+func fieldFilter(filter *lm4.GlobalFilter, f lm3.GlobalFilter, field string) {
+	if isQuotedPhrase(f.Query) {
+		setPhrase(filter, field, strings.Trim(f.Query, `"`))
+		return
+	}
+	if strings.ContainsAny(f.Query, "\"*? \t()") {
+		setQueryString(filter, luceneClause(f))
+		return
+	}
+	setPhrase(filter, field, f.Query)
+}
+
+func isQuotedPhrase(q string) bool {
+	return len(q) >= 2 && q[0] == '"' && q[len(q)-1] == '"' && strings.Count(q, `"`) == 2
+}
+
+func buildEitherFilter(either []lm3.GlobalFilter) *lm4.GlobalFilter {
+	var clauses, keys []string
+	for _, f := range either {
+		if !f.Active {
+			continue
+		}
+		clause := luceneClause(f)
+		if clause == "" {
+			slog.Warn("skipping global filter of unknown type", "type", f.Type, "id", f.ID)
+			continue
+		}
+		clauses = append(clauses, clause)
+		if f.Field != "" {
+			keys = append(keys, visualization.StripRaw(f.Field))
+		}
+	}
+	if len(clauses) == 0 {
+		return nil
+	}
+
+	filter := objects.GetDefaultFilterObject("")
+	setQueryString(filter, strings.Join(clauses, " OR "))
+	filter.Meta.Alias = "either: " + strings.Join(keys, ", ")
+
+	return filter
+}
+
+func luceneClause(f lm3.GlobalFilter) string {
+	field := visualization.StripRaw(f.Field)
+	switch f.Type {
+	case "terms":
+		return fmt.Sprintf("%s:%q", field, string(f.Value))
+	case "exists":
+		return "_exists_:" + field
+	case "querystring":
+		return "(" + visualization.NormalizeLucene(f.Query) + ")"
+	case "field":
+		return fmt.Sprintf("%s:(%s)", field, visualization.NormalizeLucene(f.Query))
+	default:
+		return ""
+	}
+}
+
+func setPhrase(filter *lm4.GlobalFilter, field, value string) {
+	filter.Query = &lm4.GlobalFilterQuery{MatchPhrase: map[string]string{field: value}}
+	filter.Meta.Params = &lm4.FilterParams{Query: value}
+	filter.Meta.Type = "phrase"
+	filter.Meta.Key = field
+}
+
+func setQueryString(filter *lm4.GlobalFilter, query string) {
+	filter.Query = &lm4.GlobalFilterQuery{QueryString: map[string]string{"query": query}}
+	filter.Meta.Type = "query_string"
+	filter.Meta.Key = "query"
 }
 
 func (dashboard *LM4Dashboard) buildFilterReferenceObject(id string, indexRefName string) *lm4.Reference {

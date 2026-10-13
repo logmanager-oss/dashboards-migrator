@@ -62,6 +62,11 @@ var (
 	rawAfterExists = regexp.MustCompile(`(_exists_:\s*[^\s()]+?)\.raw\b`)
 )
 
+// StripRaw removes the LM3 ".raw" suffix from a field name.
+func StripRaw(field string) string {
+	return strings.TrimSuffix(field, ".raw")
+}
+
 // NormalizeLucene strips the LM3 ".raw" field suffix, which LM4 fields do not have.
 func NormalizeLucene(q string) string {
 	q = rawBeforeColon.ReplaceAllString(q, "$1")
