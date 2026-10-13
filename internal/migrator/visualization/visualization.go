@@ -20,6 +20,7 @@ type MigrationParams struct {
 	ID                string
 	Span              int
 	IndexPattern      string
+	Content           string
 }
 
 type LM4Visualization struct {
@@ -29,13 +30,20 @@ type LM4Visualization struct {
 }
 
 func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, error) {
+	_, isMarkdown := params.VisualizationType.(*objects.Markdown)
+
 	vis := &LM4Visualization{
 		SavedObject: params.VisualizationType.GetDefaultVisualizationSavedObject(params.IndexPattern),
 		VisState:    params.VisualizationType.GetDefaultVisState(),
-		Search:      objects.GetDefaultSearchObject(true),
+		Search:      objects.GetDefaultSearchObject(!isMarkdown),
 	}
 
-	vis.migrateQueries(params.Queries)
+	// Text panels have no queries, so the "all queries" default must not apply to them.
+	if isMarkdown {
+		vis.VisState.Params.Markdown = params.Content
+	} else {
+		vis.migrateQueries(params.Queries)
+	}
 	vis.migrateConfig(params.Field, params.FieldSize, params.Columns, params.VisualizationType)
 	vis.migrateTitles(params.Title)
 	vis.SavedObject.ID = params.ID

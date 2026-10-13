@@ -12,6 +12,8 @@ You need to provide an input path to exported LM3 dashboard and output path to w
 
 If you want LM4 dashboard to be targetting specific index-pattern you can provide it by using `-ip` flag but it's not mandatory - index-pattern can also be assigned during dashboard import.
 
+Markdown text panels are migrated. HTML text panels and other unsupported panel types are skipped and logged as warnings.
+
 ## Disclaimer
 
 **While Dashboards migrator should be able to deal with most common use cases effectively, there is a possibility that more complicated dashboards might not be migrated fully or with errors! Always make sure to import and test your migrated dashboard to make sure it works as expected.**

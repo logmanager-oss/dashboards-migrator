@@ -20,6 +20,10 @@ func visualisationTypeDiscovery(panel *lm3.Panel, queries []lm3.Query) (objects.
 		return &objects.LogOverview{}, nil
 	}
 
+	if panel.Type == "text" && panel.Mode == "markdown" {
+		return &objects.Markdown{}, nil
+	}
+
 	if panel.Type == "map" {
 		return &objects.Map{}, nil
 	}
@@ -36,5 +40,5 @@ func visualisationTypeDiscovery(panel *lm3.Panel, queries []lm3.Query) (objects.
 		}
 	}
 
-	return nil, &PanelTypeNotFoundError{panel.Type}
+	return nil, &PanelTypeNotFoundError{panelType: panel.Type, mode: panel.Mode}
 }

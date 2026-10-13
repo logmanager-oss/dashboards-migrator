@@ -23,16 +23,15 @@ func Migrate(lm4Dashboard *dashboard.LM4Dashboard, lm3Dashboard *dashboard.LM3Da
 		for _, panel := range row.Panels {
 			params, err := gatherMigrationParams(&panel, lm3Dashboard.GetPanelQueries(&panel), indexPattern)
 			if err != nil {
+				if errors.As(err, new(*PanelTypeNotFoundError)) {
+					slog.Warn("skipping panel", "title", panel.Title, "type", panel.Type, "mode", panel.Mode)
+					continue
+				}
 				return nil, fmt.Errorf("building migration params: %w", err)
 			}
 
 			visualization, err := visualization.MigratePanelToVisualization(params)
 			if err != nil {
-				panelTypeNotFoundError := &PanelTypeNotFoundError{}
-				if errors.As(err, &panelTypeNotFoundError) {
-					slog.Error(err.Error())
-					continue
-				}
 				return nil, fmt.Errorf("migrating %s LM3 panel to LM4 visualization: %w", panel.Title, err)
 			}
 
@@ -75,6 +74,8 @@ func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query, indexPattern s
 		params.FieldSize = params.Queries[0].Size
 	case *objects.LogOverview:
 		params.Columns = panel.Fields
+	case *objects.Markdown:
+		params.Content = panel.Content
 	default:
 		// we no longer use .raw field name convention so we need to strip it
 		params.Field = strings.TrimSuffix(panel.Field, ".raw")

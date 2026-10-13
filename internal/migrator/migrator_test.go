@@ -1,13 +1,17 @@
 package migrator
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/dashboard"
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualization"
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
+	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 )
 
 func Test_gatherMigrationParams(t *testing.T) {
@@ -16,7 +20,7 @@ func Test_gatherMigrationParams(t *testing.T) {
 		panel       *lm3.Panel
 		queries     []lm3.Query
 		expected    *visualization.MigrationParams
-		expectedErr error
+		expectedErr *PanelTypeNotFoundError
 	}{
 		{
 			name: "Test params gathering - test case 1 - event over time",
@@ -277,21 +281,97 @@ func Test_gatherMigrationParams(t *testing.T) {
 			},
 			expectedErr: &PanelTypeNotFoundError{},
 		},
+		{
+			name: "Test params gathering - test case 9 - markdown text panel",
+			panel: &lm3.Panel{
+				Span:    6,
+				Type:    "text",
+				Mode:    "markdown",
+				Content: "# Hello",
+				Title:   "Notes",
+			},
+			expected: &visualization.MigrationParams{
+				Title:             "Notes",
+				Content:           "# Hello",
+				VisualizationType: &objects.Markdown{},
+				Span:              6,
+			},
+		},
+		{
+			name: "Test params gathering - test case 10 - html text panel",
+			panel: &lm3.Panel{
+				Type: "text",
+				Mode: "html",
+			},
+			expectedErr: &PanelTypeNotFoundError{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			params, err := gatherMigrationParams(tt.panel, tt.queries, "")
-			if err != nil {
-				if assert.ErrorAs(t, err, &tt.expectedErr) {
-					return
-				}
-				t.Fatal(err)
+			if tt.expectedErr != nil {
+				var target *PanelTypeNotFoundError
+				assert.ErrorAs(t, err, &target)
+				return
 			}
+			require.NoError(t, err)
 
 			// Inject ID since it generated inside gather function
 			tt.expected.ID = params.ID
 
 			assert.Equal(t, tt.expected, params)
+		})
+	}
+}
+
+func TestMigrate(t *testing.T) {
+	tests := []struct {
+		name   string
+		panels []lm3.Panel
+		verify func(t *testing.T, output []lm4.SavedObject)
+	}{
+		{
+			name: "html text panel is skipped and other panels migrate",
+			panels: []lm3.Panel{
+				{Type: "text", Mode: "html", Title: "Html"},
+				{Type: "terms", Chart: "pie", Field: "msg.protocol", Size: 5, Title: "Pie"},
+			},
+			verify: func(t *testing.T, output []lm4.SavedObject) {
+				require.Len(t, output, 2)
+				assert.Equal(t, "visualization", output[0].Type)
+				assert.Equal(t, "dashboard", output[1].Type)
+				require.Len(t, output[1].References, 1)
+				assert.Equal(t, "panel_0", output[1].References[0].Name)
+			},
+		},
+		{
+			name: "markdown text panel migrates with content and no references",
+			panels: []lm3.Panel{
+				{Type: "text", Mode: "markdown", Content: "# Hello", Title: "Notes", Span: 6},
+			},
+			verify: func(t *testing.T, output []lm4.SavedObject) {
+				require.Len(t, output, 2)
+				assert.Empty(t, output[0].References)
+
+				var visState lm4.VisState
+				require.NoError(t, json.Unmarshal([]byte(output[0].Attributes.VisState), &visState))
+				assert.Equal(t, "markdown", visState.Type)
+				assert.Equal(t, "# Hello", visState.Params.Markdown)
+				assert.Contains(t, output[0].Attributes.VisState, `"times":[]`)
+				assert.NotContains(t, output[0].Attributes.KibanaSavedObjectMeta.SearchSourceJSON, "indexRefName")
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lm3Dashboard := &dashboard.LM3Dashboard{
+				Title: "Dashboard",
+				Rows:  []lm3.Row{{Panels: tt.panels}},
+			}
+
+			output, err := Migrate(dashboard.NewLM4Dashboard(), lm3Dashboard, "lm-*")
+			require.NoError(t, err)
+			tt.verify(t, output)
 		})
 	}
 }
