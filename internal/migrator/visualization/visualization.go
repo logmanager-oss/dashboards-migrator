@@ -3,6 +3,7 @@ package visualization
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -24,6 +25,8 @@ type MigrationParams struct {
 	Content           string
 	Metric            string
 	MetricField       string
+	Filters           []lm4.Filter
+	Colors            map[string]string
 }
 
 type LM4Visualization struct {
@@ -44,7 +47,7 @@ func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, err
 	// Text panels have no queries, so the "all queries" default must not apply to them.
 	if isMarkdown {
 		vis.VisState.Params.Markdown = params.Content
-	} else {
+	} else if len(params.Filters) == 0 {
 		vis.migrateQueries(params.Queries)
 	}
 	vis.migrateConfig(objects.AggConfig{
@@ -52,9 +55,18 @@ func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, err
 		Size:        params.FieldSize,
 		Metric:      params.Metric,
 		MetricField: params.MetricField,
+		Filters:     params.Filters,
 	}, params.Columns, params.VisualizationType)
 	vis.migrateTitles(params.Title)
 	vis.SavedObject.ID = params.ID
+
+	if len(params.Filters) > 0 {
+		uiState, err := json.Marshal(map[string]interface{}{"vis": map[string]interface{}{"colors": params.Colors}})
+		if err != nil {
+			return nil, fmt.Errorf("marshalling ui state: %w", err)
+		}
+		vis.SavedObject.Attributes.UIStateJSON = string(uiState)
+	}
 
 	finalVisualizationObject, err := vis.buildFinalVisualizationObject(params.VisualizationType)
 	if err != nil {

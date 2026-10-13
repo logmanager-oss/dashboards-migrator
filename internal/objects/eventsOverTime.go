@@ -36,7 +36,7 @@ func (e *EventsOverTime) GetDefaultVisualizationSavedObject(indexPattern string)
 }
 
 func (e *EventsOverTime) GetVisualizationConfig(cfg AggConfig) []lm4.VisStateAggs {
-	return []lm4.VisStateAggs{
+	aggs := []lm4.VisStateAggs{
 		metricAgg(cfg),
 		{
 			ID:      "2",
@@ -56,6 +56,19 @@ func (e *EventsOverTime) GetVisualizationConfig(cfg AggConfig) []lm4.VisStateAgg
 			},
 		},
 	}
+
+	// A filters bucket gives one series per query.
+	if len(cfg.Filters) > 0 {
+		aggs = append(aggs, lm4.VisStateAggs{
+			ID:      "3",
+			Enabled: true,
+			Type:    "filters",
+			Schema:  "group",
+			Params:  lm4.VisStateAggsParams{Filters: cfg.Filters},
+		})
+	}
+
+	return aggs
 }
 
 func (e *EventsOverTime) GetDefaultVisState() *lm4.VisState { // nolint:dupl
