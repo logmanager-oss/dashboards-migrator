@@ -161,7 +161,6 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 					Pin:    false,
 					Enable: true,
 					Size:   10,
-					Union:  "AND",
 				},
 			},
 			field:    "meta.parser",

@@ -145,7 +145,7 @@ func (dashboard *LM4Dashboard) migrateFilters(lm3filters []lm3.GlobalFilter, ind
 			if lm3filter.Query != "" {
 				lm4filter.Meta.Params.Query = lm3filter.Query
 			} else {
-				lm4filter.Meta.Params.Query = lm3filter.Value
+				lm4filter.Meta.Params.Query = string(lm3filter.Value)
 			}
 
 			lm4filter.Query.MatchPhrase = map[string]string{lm3filter.Field: lm4filter.Meta.Params.Query}

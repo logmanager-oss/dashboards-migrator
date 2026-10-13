@@ -2,8 +2,10 @@
 package dashboard
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
@@ -33,9 +35,8 @@ func NewLM3Dashboard(input []byte) (*LM3Dashboard, error) {
 }
 
 func (d *LM3Dashboard) unpackQueries(lm3dashboard *lm3.BaseObject) {
-	for _, query := range lm3dashboard.Services.Queries.List {
-		d.Queries = append(d.Queries, query)
-	}
+	d.Queries = slices.SortedFunc(maps.Values(lm3dashboard.Services.Queries.List),
+		func(a, b lm3.Query) int { return cmp.Compare(a.ID, b.ID) })
 }
 
 func (d *LM3Dashboard) unpackFilters(lm3dashboard *lm3.BaseObject) {
@@ -45,6 +46,7 @@ func (d *LM3Dashboard) unpackFilters(lm3dashboard *lm3.BaseObject) {
 		}
 		d.GlobalFilters = append(d.GlobalFilters, filter)
 	}
+	slices.SortFunc(d.GlobalFilters, func(a, b lm3.GlobalFilter) int { return cmp.Compare(a.ID, b.ID) })
 }
 
 func (d *LM3Dashboard) unpackRows(lm3dashboard *lm3.BaseObject) {
