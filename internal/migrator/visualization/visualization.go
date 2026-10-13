@@ -3,6 +3,7 @@ package visualization
 
 import (
 	"encoding/json"
+	"regexp"
 	"strings"
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
@@ -56,30 +57,37 @@ func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, err
 	return finalVisualizationObject, nil
 }
 
+var (
+	rawBeforeColon = regexp.MustCompile(`\.raw(\s*:)`)
+	rawAfterExists = regexp.MustCompile(`(_exists_:\s*[^\s()]+?)\.raw\b`)
+)
+
+// NormalizeLucene strips the LM3 ".raw" field suffix, which LM4 fields do not have.
+func NormalizeLucene(q string) string {
+	q = rawBeforeColon.ReplaceAllString(q, "$1")
+	return rawAfterExists.ReplaceAllString(q, "$1")
+}
+
 func (vis *LM4Visualization) migrateQueries(lm3queries []lm3.Query) {
-	var queries []string
+	queries := make([]string, 0, len(lm3queries))
+	// Parentheses keep "a AND b" from one query from binding to the next one.
+	wrap := len(lm3queries) > 1
 
 	for _, query := range lm3queries {
-		// if one of the queries is * then just return as there is no reason to migrate - "*" means ALL events, which is a default search in LM4
-		if query.Query == "*" {
+		// "*" and an empty query both mean ALL events, the default search in LM4
+		q := strings.TrimSpace(query.Query)
+		if q == "*" || q == "" {
 			return
 		}
 
-		// if one of the queries is topN then skip it - we either don't support it or it's Events Over Time As Split Series so there is no need to migrate query
-		if query.Type == "topN" {
-			continue
+		q = NormalizeLucene(q)
+		if wrap {
+			q = "(" + q + ")"
 		}
-
-		queries = append(queries, fixGroupedValues(query.Query))
+		queries = append(queries, q)
 	}
 
-	vis.Search.Query.Query = strings.Join(queries, " or ")
-}
-
-// fixGroupedValues inserts OR between space-separated quoted values in a Lucene query.
-// e.g. field:("val1" "val2") becomes field:("val1" OR "val2")
-func fixGroupedValues(query string) string {
-	return strings.ReplaceAll(query, `" "`, `" OR "`)
+	vis.Search.Query.Query = strings.Join(queries, " OR ")
 }
 
 func (vis *LM4Visualization) migrateConfig(field string, size int, columns []string, visualizationType objects.VisType) {

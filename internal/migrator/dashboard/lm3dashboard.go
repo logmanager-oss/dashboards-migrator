@@ -56,9 +56,26 @@ func (d *LM3Dashboard) unpackRows(lm3dashboard *lm3.BaseObject) {
 func (d *LM3Dashboard) GetPanelQueries(panel *lm3.Panel) []lm3.Query {
 	var queries []lm3.Query
 	for _, query := range d.Queries {
-		if slices.Contains(panel.Queries.IDs, query.ID) {
-			queries = append(queries, query)
+		if !query.Enable {
+			continue
 		}
+
+		switch panel.Queries.Mode {
+		case "pinned":
+			if !query.Pin {
+				continue
+			}
+		case "unpinned":
+			if query.Pin {
+				continue
+			}
+		case "selected":
+			if !slices.Contains(panel.Queries.IDs, query.ID) {
+				continue
+			}
+		}
+
+		queries = append(queries, query)
 	}
 
 	return queries

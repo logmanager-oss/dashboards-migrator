@@ -5,7 +5,7 @@ import "github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
 func GetDefaultSearchObject(withRef bool) *lm4.SearchSourceJSON {
 	search := &lm4.SearchSourceJSON{
 		Query: lm4.Query{
-			Language: "kuery",
+			Language: "lucene",
 			Query:    "",
 		},
 		Filter: []lm4.GlobalFilter{},
