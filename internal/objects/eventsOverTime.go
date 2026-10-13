@@ -35,17 +35,9 @@ func (e *EventsOverTime) GetDefaultVisualizationSavedObject(indexPattern string)
 	}
 }
 
-func (e *EventsOverTime) GetVisualizationConfig(string, int) []lm4.VisStateAggs {
+func (e *EventsOverTime) GetVisualizationConfig(cfg AggConfig) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
-		{
-			ID:      "1",
-			Enabled: true,
-			Type:    "count",
-			Params: lm4.VisStateAggsParams{
-				Filters: []lm4.Filter{},
-			},
-			Schema: "metric",
-		},
+		metricAgg(cfg),
 		{
 			ID:      "2",
 			Enabled: true,

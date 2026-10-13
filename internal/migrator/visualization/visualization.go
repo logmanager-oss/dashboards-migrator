@@ -22,6 +22,8 @@ type MigrationParams struct {
 	Span              int
 	IndexPattern      string
 	Content           string
+	Metric            string
+	MetricField       string
 }
 
 type LM4Visualization struct {
@@ -45,7 +47,12 @@ func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, err
 	} else {
 		vis.migrateQueries(params.Queries)
 	}
-	vis.migrateConfig(params.Field, params.FieldSize, params.Columns, params.VisualizationType)
+	vis.migrateConfig(objects.AggConfig{
+		Field:       params.Field,
+		Size:        params.FieldSize,
+		Metric:      params.Metric,
+		MetricField: params.MetricField,
+	}, params.Columns, params.VisualizationType)
 	vis.migrateTitles(params.Title)
 	vis.SavedObject.ID = params.ID
 
@@ -58,8 +65,8 @@ func MigratePanelToVisualization(params *MigrationParams) (*lm4.SavedObject, err
 }
 
 var (
-	rawBeforeColon = regexp.MustCompile(`\.raw(\s*:)`)
-	rawAfterExists = regexp.MustCompile(`(_exists_:\s*[^\s()]+?)\.raw\b`)
+	_rawBeforeColon = regexp.MustCompile(`\.raw(\s*:)`)
+	_rawAfterExists = regexp.MustCompile(`(_exists_:\s*[^\s()]+?)\.raw\b`)
 )
 
 // StripRaw removes the LM3 ".raw" suffix from a field name.
@@ -69,8 +76,8 @@ func StripRaw(field string) string {
 
 // NormalizeLucene strips the LM3 ".raw" field suffix, which LM4 fields do not have.
 func NormalizeLucene(q string) string {
-	q = rawBeforeColon.ReplaceAllString(q, "$1")
-	return rawAfterExists.ReplaceAllString(q, "$1")
+	q = _rawBeforeColon.ReplaceAllString(q, "$1")
+	return _rawAfterExists.ReplaceAllString(q, "$1")
 }
 
 func (vis *LM4Visualization) migrateQueries(lm3queries []lm3.Query) {
@@ -95,9 +102,25 @@ func (vis *LM4Visualization) migrateQueries(lm3queries []lm3.Query) {
 	vis.Search.Query.Query = strings.Join(queries, " OR ")
 }
 
-func (vis *LM4Visualization) migrateConfig(field string, size int, columns []string, visualizationType objects.VisType) {
-	vis.VisState.Aggs = visualizationType.GetVisualizationConfig(field, size)
+func (vis *LM4Visualization) migrateConfig(cfg objects.AggConfig, columns []string, visualizationType objects.VisType) {
+	vis.VisState.Aggs = visualizationType.GetVisualizationConfig(cfg)
 	vis.SavedObject.Attributes.Columns = columns
+	vis.migrateSeriesLabel(objects.MetricLabel(cfg))
+}
+
+// migrateSeriesLabel sets the series and value-axis label. It does nothing without series params.
+func (vis *LM4Visualization) migrateSeriesLabel(label string) {
+	params := &vis.VisState.Params
+	if len(params.SeriesParams) > 0 {
+		if data, ok := params.SeriesParams[0]["data"].(map[string]interface{}); ok {
+			data["label"] = label
+		}
+	}
+	if len(params.ValueAxes) > 0 {
+		if title, ok := params.ValueAxes[0]["title"].(map[string]interface{}); ok {
+			title["text"] = label
+		}
+	}
 }
 
 func (vis *LM4Visualization) migrateTitles(title string) {

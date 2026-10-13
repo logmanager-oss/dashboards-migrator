@@ -80,5 +80,28 @@ func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query, indexPattern s
 		params.FieldSize = panel.Size
 	}
 
+	params.Metric, params.MetricField = gatherMetric(panel)
+
 	return params, nil
+}
+
+var _metricTypes = map[string]string{"total": "sum", "mean": "avg", "min": "min", "max": "max"}
+
+// gatherMetric maps the LM3 value-field statistic of a panel to an LM4 metric aggregation.
+// Panels without a usable statistic and value field stay on count.
+func gatherMetric(panel *lm3.Panel) (metric, field string) {
+	var stat, valueField string
+	switch {
+	case panel.Type == "terms" && panel.Tmode == "terms_stats":
+		stat, valueField = panel.Tstat, panel.Valuefield
+	case panel.Type == "histogram":
+		stat, valueField = panel.Mode, panel.ValueField
+	}
+
+	metric, ok := _metricTypes[stat]
+	if !ok || valueField == "" {
+		return "count", ""
+	}
+
+	return metric, visualization.StripRaw(valueField)
 }

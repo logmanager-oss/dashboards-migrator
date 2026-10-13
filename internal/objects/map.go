@@ -35,26 +35,19 @@ func (m *Map) GetDefaultVisualizationSavedObject(indexPattern string) *lm4.Saved
 	}
 }
 
-func (m *Map) GetVisualizationConfig(field string, size int) []lm4.VisStateAggs {
+func (m *Map) GetVisualizationConfig(cfg AggConfig) []lm4.VisStateAggs {
 	return []lm4.VisStateAggs{
-		{
-			ID:      "1",
-			Enabled: true,
-			Type:    "count",
-			Params: lm4.VisStateAggsParams{
-				Filters: []lm4.Filter{},
-			},
-			Schema: "metric",
-		},
+		// LM3 maps have no value field, so the metric is always a count.
+		metricAgg(AggConfig{Metric: "count"}),
 		{
 			ID:      "2",
 			Enabled: true,
 			Type:    "terms",
 			Params: lm4.VisStateAggsParams{
-				Field:              field,
+				Field:              cfg.Field,
 				OrderBy:            "1",
 				Order:              "desc",
-				Size:               size,
+				Size:               cfg.Size,
 				OtherBucket:        false,
 				OtherBucketLabel:   "Other",
 				MissingBucket:      false,
