@@ -491,6 +491,18 @@ func TestMigrate(t *testing.T) {
 				assert.NotContains(t, output[0].Attributes.KibanaSavedObjectMeta.SearchSourceJSON, "indexRefName")
 			},
 		},
+		{
+			name: "dashboard with every panel skipped emits empty arrays",
+			panels: []lm3.Panel{
+				{Type: "text", Mode: "html", Title: "Html"},
+			},
+			verify: func(t *testing.T, output []lm4.SavedObject) {
+				require.Len(t, output, 1)
+				assert.Equal(t, "[]", output[0].Attributes.PanelsJSON)
+				assert.NotNil(t, output[0].References)
+				assert.Empty(t, output[0].References)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

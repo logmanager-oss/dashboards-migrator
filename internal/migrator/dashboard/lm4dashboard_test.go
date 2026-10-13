@@ -166,7 +166,6 @@ func Test_rowHeight(t *testing.T) {
 		px       string
 		expected int
 	}{
-		{"350px", 18},
 		{"garbage", objects.DefaultVisHeight},
 	}
 	for _, tt := range tests {

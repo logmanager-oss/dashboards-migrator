@@ -1,6 +1,10 @@
 package objects
 
-import "github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
+import (
+	"cmp"
+
+	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm4"
+)
 
 // AggConfig carries the LM3 panel values that LM4 aggregations are built from.
 type AggConfig struct {
@@ -21,7 +25,7 @@ func metricAgg(cfg AggConfig) lm4.VisStateAggs {
 	return lm4.VisStateAggs{
 		ID:      "1",
 		Enabled: true,
-		Type:    cfg.Metric,
+		Type:    cmp.Or(cfg.Metric, "count"),
 		Params:  lm4.VisStateAggsParams{Field: cfg.MetricField},
 		Schema:  "metric",
 	}

@@ -1,7 +1,6 @@
 package visualization
 
 import (
-	"cmp"
 	"encoding/json"
 	"testing"
 
@@ -506,7 +505,7 @@ func TestMigrator_migrateVisualizations(t *testing.T) {
 				VisualizationType: tt.visualizationType,
 				ID:                uuid.New().String(),
 				IndexPattern:      tt.indexPattern,
-				Metric:            cmp.Or(tt.metric, "count"),
+				Metric:            tt.metric,
 				MetricField:       tt.metricField,
 				Filters:           tt.filters,
 				Colors:            tt.colors,

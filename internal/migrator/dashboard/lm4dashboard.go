@@ -30,6 +30,8 @@ func NewLM4Dashboard() *LM4Dashboard {
 	return &LM4Dashboard{
 		savedObject:      objects.GetDefaultDashboardSavedObject(),
 		search:           objects.GetDefaultSearchObject(false),
+		Panels:           []lm4.PanelJSON{},
+		references:       []lm4.Reference{},
 		currentRowHeight: objects.DefaultVisHeight,
 	}
 }
