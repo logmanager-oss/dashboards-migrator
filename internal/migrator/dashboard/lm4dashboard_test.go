@@ -3,6 +3,7 @@ package dashboard
 import (
 	"cmp"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,9 @@ func TestLM4Dashboard_CalculateGridPosition(t *testing.T) {
 	tests := []struct {
 		name                string
 		span                int
+		height              int
 		currentRowHeight    int
+		currentLineHeight   int
 		currentGridPosition struct {
 			X int
 			Y int
@@ -101,9 +104,10 @@ func TestLM4Dashboard_CalculateGridPosition(t *testing.T) {
 			},
 		},
 		{
-			name:             "Test calculate grid position - row height is used for H and wrap",
-			span:             12,
-			currentRowHeight: 12,
+			name:              "Test calculate grid position - row height is used for H and wrap",
+			span:              12,
+			currentRowHeight:  12,
+			currentLineHeight: 12,
 			currentGridPosition: struct {
 				X int
 				Y int
@@ -118,6 +122,26 @@ func TestLM4Dashboard_CalculateGridPosition(t *testing.T) {
 				H: 12,
 			},
 		},
+		{
+			name:              "Test calculate grid position - a short markdown line wraps by its own height, not the row height",
+			span:              12,
+			height:            5,
+			currentRowHeight:  12,
+			currentLineHeight: 5,
+			currentGridPosition: struct {
+				X int
+				Y int
+			}{
+				X: 48,
+				Y: 0,
+			},
+			expected: &lm4.GridData{
+				X: 0,
+				Y: 5,
+				W: 48,
+				H: 5,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -125,11 +149,13 @@ func TestLM4Dashboard_CalculateGridPosition(t *testing.T) {
 				savedObject:         objects.GetDefaultDashboardSavedObject(),
 				search:              objects.GetDefaultSearchObject(false),
 				currentRowHeight:    cmp.Or(tt.currentRowHeight, objects.DefaultVisHeight),
+				currentLineHeight:   cmp.Or(tt.currentLineHeight, objects.DefaultVisHeight),
 				currentGridPosition: tt.currentGridPosition,
 			}
-			grid := dashboard.calculateGridPosition(tt.span)
+			grid := dashboard.calculateGridPosition(tt.span, cmp.Or(tt.height, dashboard.currentRowHeight))
 
 			assert.Equal(t, tt.expected, grid)
+			assert.Equal(t, grid.H, dashboard.currentLineHeight)
 		})
 	}
 }
@@ -148,7 +174,7 @@ func TestLM4Dashboard_StartRow(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dashboard := &LM4Dashboard{currentRowHeight: objects.DefaultVisHeight}
+			dashboard := &LM4Dashboard{currentRowHeight: objects.DefaultVisHeight, currentLineHeight: objects.DefaultVisHeight}
 			dashboard.currentGridPosition.X = tt.x
 			dashboard.currentGridPosition.Y = tt.y
 
@@ -171,6 +197,26 @@ func Test_rowHeight(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.px, func(t *testing.T) {
 			assert.Equal(t, tt.expected, rowHeight(tt.px))
+		})
+	}
+}
+
+func Test_markdownHeight(t *testing.T) {
+	tests := []struct {
+		name     string
+		content  string
+		span     int
+		expected int
+	}{
+		{name: "one short line", content: "Windows only.", span: 12, expected: 4},
+		{name: "blank lines count as rendered lines", content: "Set:\n\nAudit Policies.", span: 12, expected: 6},
+		{name: "a long line wraps at the panel width", content: strings.Repeat("x", 193), span: 12, expected: 5},
+		{name: "a narrow panel wraps sooner", content: strings.Repeat("x", 100), span: 3, expected: 6},
+		{name: "empty content keeps one line", content: "", span: 12, expected: 4},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, markdownHeight(tt.content, tt.span))
 		})
 	}
 }
@@ -220,7 +266,7 @@ func TestLM4Dashboard_BuildPanelObject(t *testing.T) {
 				currentRowHeight:    objects.DefaultVisHeight,
 				currentGridPosition: tt.currentGridPosition,
 			}
-			grid := dashboard.calculateGridPosition(tt.span)
+			grid := dashboard.calculateGridPosition(tt.span, dashboard.currentRowHeight)
 
 			panel := dashboard.buildPanelObject(
 				grid,
