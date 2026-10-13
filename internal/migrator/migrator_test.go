@@ -93,6 +93,59 @@ func Test_gatherMigrationParams(t *testing.T) {
 			},
 		},
 		{
+			name: "Test params gathering - event over time with several queries",
+			panel: &lm3.Panel{
+				Span:    12,
+				Type:    "histogram",
+				Queries: lm3.Queries{Mode: "all", IDs: []int{0, 1}},
+				Title:   "Events over time",
+			},
+			queries: []lm3.Query{
+				{ID: 0, Type: "lucene", Query: "msg.status:failed", Alias: "failed", Color: "#aaaaaa"},
+				{ID: 1, Type: "lucene", Query: "meta.parser.raw:lm-fortigate", Color: "#bbbbbb"},
+				{ID: 2, Type: "lucene", Query: "", Color: "#cccccc"},
+			},
+			expected: &visualization.MigrationParams{
+				Title: "Events over time",
+				Queries: []lm3.Query{
+					{ID: 0, Type: "lucene", Query: "msg.status:failed", Alias: "failed", Color: "#aaaaaa"},
+					{ID: 1, Type: "lucene", Query: "meta.parser.raw:lm-fortigate", Color: "#bbbbbb"},
+					{ID: 2, Type: "lucene", Query: "", Color: "#cccccc"},
+				},
+				VisualizationType: &objects.EventsOverTime{},
+				Metric:            "count",
+				Span:              12,
+				Filters: []lm4.Filter{
+					{Input: map[string]string{"query": "msg.status:failed", "language": "lucene"}, Label: "failed"},
+					{Input: map[string]string{"query": "meta.parser:lm-fortigate", "language": "lucene"}},
+					{Input: map[string]string{"query": "*", "language": "lucene"}},
+				},
+				Colors: map[string]string{"failed": "#aaaaaa", "meta.parser:lm-fortigate": "#bbbbbb", "*": "#cccccc"},
+			},
+		},
+		{
+			name: "Test params gathering - pie graph with several queries keeps no series filters",
+			panel: &lm3.Panel{
+				Span: 6, Type: "terms", Chart: "pie", Field: "meta.parser", Size: 10,
+				Queries: lm3.Queries{Mode: "all"},
+			},
+			queries: []lm3.Query{
+				{ID: 0, Type: "lucene", Query: "a", Alias: "a", Color: "#aaaaaa"},
+				{ID: 1, Type: "lucene", Query: "b", Alias: "b", Color: "#bbbbbb"},
+			},
+			expected: &visualization.MigrationParams{
+				Queries: []lm3.Query{
+					{ID: 0, Type: "lucene", Query: "a", Alias: "a", Color: "#aaaaaa"},
+					{ID: 1, Type: "lucene", Query: "b", Alias: "b", Color: "#bbbbbb"},
+				},
+				VisualizationType: &objects.PieGraph{},
+				Field:             "meta.parser",
+				FieldSize:         10,
+				Metric:            "count",
+				Span:              6,
+			},
+		},
+		{
 			name: "Test params gathering - test case 3 - log overview",
 			panel: &lm3.Panel{
 				Span: 12,

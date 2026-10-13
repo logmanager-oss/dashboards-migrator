@@ -8,6 +8,7 @@ type AggConfig struct {
 	Size        int
 	Metric      string
 	MetricField string
+	Filters     []lm4.Filter
 }
 
 type VisType interface {

@@ -2,9 +2,11 @@
 package migrator
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -80,9 +82,33 @@ func gatherMigrationParams(panel *lm3.Panel, queries []lm3.Query, indexPattern s
 		params.FieldSize = panel.Size
 	}
 
+	if _, ok := params.VisualizationType.(*objects.EventsOverTime); ok && len(queries) > 1 {
+		params.Filters, params.Colors = gatherSeriesFilters(queries)
+	}
+
 	params.Metric, params.MetricField = gatherMetric(panel)
 
 	return params, nil
+}
+
+// gatherSeriesFilters builds one filters-agg entry per query, so LM4 draws one series per query like LM3.
+func gatherSeriesFilters(queries []lm3.Query) ([]lm4.Filter, map[string]string) {
+	filters := make([]lm4.Filter, 0, len(queries))
+	colors := make(map[string]string, len(queries))
+	for _, q := range queries {
+		// An empty query means all events, which the filters agg spells "*".
+		query := cmp.Or(visualization.NormalizeLucene(strings.TrimSpace(q.Query)), "*")
+		filters = append(filters, lm4.Filter{
+			Input: map[string]string{"query": query, "language": "lucene"},
+			Label: q.Alias,
+		})
+		// OSD keys series colors by the filter label, or by the query text when the label is empty.
+		if q.Color != "" {
+			colors[cmp.Or(q.Alias, query)] = q.Color
+		}
+	}
+
+	return filters, colors
 }
 
 var _metricTypes = map[string]string{"total": "sum", "mean": "avg", "min": "min", "max": "max"}
