@@ -1,10 +1,12 @@
 package dashboard
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
 	"github.com/logmanager-oss/dashboards-migrator/internal/types/lm3"
@@ -208,11 +210,16 @@ func TestLM4Dashboard_BuildReferenceObject(t *testing.T) {
 	}
 }
 
+func refName(i int) string {
+	return fmt.Sprintf("kibanaSavedObjectMeta.searchSourceJSON.filter[%d].meta.index", i)
+}
+
 func TestLM4Dashboard_MigrateFilters(t *testing.T) {
 	tests := []struct {
-		name     string
-		filter   []lm3.GlobalFilter
-		expected []lm4.GlobalFilter
+		name             string
+		currentRefNumber int
+		filter           []lm3.GlobalFilter
+		expected         []lm4.GlobalFilter
 	}{
 		{
 			name: "Test case 1",
@@ -235,15 +242,13 @@ func TestLM4Dashboard_MigrateFilters(t *testing.T) {
 						Disabled: false,
 						Type:     "phrase",
 						Key:      "meta.tags",
-						Params: struct {
-							Query string "json:\"query\""
-						}{
-							Query: "\"fortigate\"",
+						Params: &lm4.FilterParams{
+							Query: "fortigate",
 						},
 						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
 					},
-					Query: lm4.GlobalFilterQuery{
-						MatchPhrase: map[string]string{"meta.tags": "\"fortigate\""},
+					Query: &lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"meta.tags": "fortigate"},
 					},
 					State: map[string]string{"store": "appState"},
 				},
@@ -270,15 +275,13 @@ func TestLM4Dashboard_MigrateFilters(t *testing.T) {
 						Disabled: true,
 						Type:     "phrase",
 						Key:      "meta.tags",
-						Params: struct {
-							Query string "json:\"query\""
-						}{
-							Query: "\"fortigate\"",
+						Params: &lm4.FilterParams{
+							Query: "fortigate",
 						},
 						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
 					},
-					Query: lm4.GlobalFilterQuery{
-						MatchPhrase: map[string]string{"meta.tags": "\"fortigate\""},
+					Query: &lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"meta.tags": "fortigate"},
 					},
 					State: map[string]string{"store": "appState"},
 				},
@@ -305,15 +308,13 @@ func TestLM4Dashboard_MigrateFilters(t *testing.T) {
 						Disabled: false,
 						Type:     "phrase",
 						Key:      "meta.tags",
-						Params: struct {
-							Query string "json:\"query\""
-						}{
-							Query: "\"fortigate\"",
+						Params: &lm4.FilterParams{
+							Query: "fortigate",
 						},
 						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
 					},
-					Query: lm4.GlobalFilterQuery{
-						MatchPhrase: map[string]string{"meta.tags": "\"fortigate\""},
+					Query: &lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"meta.tags": "fortigate"},
 					},
 					State: map[string]string{"store": "appState"},
 				},
@@ -349,15 +350,13 @@ func TestLM4Dashboard_MigrateFilters(t *testing.T) {
 						Disabled: false,
 						Type:     "phrase",
 						Key:      "meta.tags",
-						Params: struct {
-							Query string "json:\"query\""
-						}{
-							Query: "\"fortigate\"",
+						Params: &lm4.FilterParams{
+							Query: "fortigate",
 						},
 						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
 					},
-					Query: lm4.GlobalFilterQuery{
-						MatchPhrase: map[string]string{"meta.tags": "\"fortigate\""},
+					Query: &lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"meta.tags": "fortigate"},
 					},
 					State: map[string]string{"store": "appState"},
 				},
@@ -368,15 +367,13 @@ func TestLM4Dashboard_MigrateFilters(t *testing.T) {
 						Disabled: false,
 						Type:     "phrase",
 						Key:      "msg.type",
-						Params: struct {
-							Query string "json:\"query\""
-						}{
-							Query: "\"traffic\"",
+						Params: &lm4.FilterParams{
+							Query: "traffic",
 						},
 						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[1].meta.index",
 					},
-					Query: lm4.GlobalFilterQuery{
-						MatchPhrase: map[string]string{"msg.type": "\"traffic\""},
+					Query: &lm4.GlobalFilterQuery{
+						MatchPhrase: map[string]string{"msg.type": "traffic"},
 					},
 					State: map[string]string{"store": "appState"},
 				},
@@ -404,25 +401,121 @@ func TestLM4Dashboard_MigrateFilters(t *testing.T) {
 						Key:          "query",
 						IndexRefName: "kibanaSavedObjectMeta.searchSourceJSON.filter[0].meta.index",
 					},
-					Query: lm4.GlobalFilterQuery{
+					Query: &lm4.GlobalFilterQuery{
 						QueryString: map[string]string{"query": "*"},
 					},
 					State: map[string]string{"store": "appState"},
 				},
 			},
 		},
+		{ // nolint:dupl
+			name:   "quoted multi-word field value becomes phrase without quotes",
+			filter: []lm3.GlobalFilter{{Type: "field", Field: "msg.text", Query: "\"TACACS+ Accounting\"", Mandate: "must", Active: true}},
+			expected: []lm4.GlobalFilter{{
+				Meta:  lm4.GlobalFilterMeta{Type: "phrase", Key: "msg.text", Params: &lm4.FilterParams{Query: "TACACS+ Accounting"}, IndexRefName: refName(0)},
+				Query: &lm4.GlobalFilterQuery{MatchPhrase: map[string]string{"msg.text": "TACACS+ Accounting"}},
+				State: map[string]string{"store": "appState"},
+			}},
+		},
+		{ // nolint:dupl
+			name:   "bare single term is a phrase",
+			filter: []lm3.GlobalFilter{{Type: "field", Field: "msg.type", Query: "configchange", Mandate: "must", Active: true}},
+			expected: []lm4.GlobalFilter{{
+				Meta:  lm4.GlobalFilterMeta{Type: "phrase", Key: "msg.type", Params: &lm4.FilterParams{Query: "configchange"}, IndexRefName: refName(0)},
+				Query: &lm4.GlobalFilterQuery{MatchPhrase: map[string]string{"msg.type": "configchange"}},
+				State: map[string]string{"store": "appState"},
+			}},
+		},
+		{ // nolint:dupl
+			name:   "complex field value becomes query_string",
+			filter: []lm3.GlobalFilter{{Type: "field", Field: "meta.tags", Query: "\"windows\" AND \"dhcp\"", Mandate: "must", Active: true}},
+			expected: []lm4.GlobalFilter{{
+				Meta:  lm4.GlobalFilterMeta{Type: "query_string", Key: "query", IndexRefName: refName(0)},
+				Query: &lm4.GlobalFilterQuery{QueryString: map[string]string{"query": "meta.tags:(\"windows\" AND \"dhcp\")"}},
+				State: map[string]string{"store": "appState"},
+			}},
+		},
+		{ // nolint:dupl
+			name:   "exists filter has no query and no params",
+			filter: []lm3.GlobalFilter{{Type: "exists", Field: "msg.src.ip.raw", Mandate: "must", Active: true}},
+			expected: []lm4.GlobalFilter{{
+				Meta:   lm4.GlobalFilterMeta{Type: "exists", Key: "msg.src.ip", Value: "exists", IndexRefName: refName(0)},
+				Exists: &lm4.ExistsFilter{Field: "msg.src.ip"},
+				State:  map[string]string{"store": "appState"},
+			}},
+		},
+		{ // nolint:dupl
+			name: "either filters merge into one query_string",
+			filter: []lm3.GlobalFilter{
+				{Type: "field", Field: "meta.tags", Query: "\"a\"", Mandate: "either", Active: true},
+				{Type: "field", Field: "meta.tags", Query: "\"b\"", Mandate: "either", Active: true},
+				{Type: "field", Field: "meta.tags", Query: "\"c\"", Mandate: "either", Active: false},
+				{Type: "querystring", Query: "x:1 AND y:2", Mandate: "either", Active: true},
+				{Type: "bogus", Field: "z", Mandate: "either", Active: true},
+			},
+			expected: []lm4.GlobalFilter{{
+				Meta: lm4.GlobalFilterMeta{
+					Alias: "either: meta.tags, meta.tags", Type: "query_string", Key: "query", IndexRefName: refName(0),
+				},
+				Query: &lm4.GlobalFilterQuery{QueryString: map[string]string{"query": "meta.tags:(\"a\") OR meta.tags:(\"b\") OR (x:1 AND y:2)"}},
+				State: map[string]string{"store": "appState"},
+			}},
+		},
+		{ // nolint:dupl
+			name:   "raw suffix is stripped from terms key",
+			filter: []lm3.GlobalFilter{{Type: "terms", Field: "meta.src.program.raw", Value: "sshd", Mandate: "must", Active: true}},
+			expected: []lm4.GlobalFilter{{
+				Meta:  lm4.GlobalFilterMeta{Type: "phrase", Key: "meta.src.program", Params: &lm4.FilterParams{Query: "sshd"}, IndexRefName: refName(0)},
+				Query: &lm4.GlobalFilterQuery{MatchPhrase: map[string]string{"meta.src.program": "sshd"}},
+				State: map[string]string{"store": "appState"},
+			}},
+		},
+		{ // nolint:dupl
+			name:   "raw suffix is stripped from querystring",
+			filter: []lm3.GlobalFilter{{Type: "querystring", Query: "msg.src.ip.raw:1.2.3.4", Mandate: "must", Active: true}},
+			expected: []lm4.GlobalFilter{{
+				Meta:  lm4.GlobalFilterMeta{Type: "query_string", Key: "query", IndexRefName: refName(0)},
+				Query: &lm4.GlobalFilterQuery{QueryString: map[string]string{"query": "msg.src.ip:1.2.3.4"}},
+				State: map[string]string{"store": "appState"},
+			}},
+		},
+		{
+			name:     "unknown type is skipped",
+			filter:   []lm3.GlobalFilter{{Type: "bogus", Field: "a", Mandate: "must", Active: true}},
+			expected: []lm4.GlobalFilter{},
+		},
+		{
+			name:     "empty input gives empty slice",
+			filter:   nil,
+			expected: []lm4.GlobalFilter{},
+		},
+		{ // nolint:dupl
+			name:             "ref name ignores panel refs",
+			currentRefNumber: 2,
+			filter:           []lm3.GlobalFilter{{Type: "terms", Field: "a", Value: "b", Mandate: "must", Active: true}},
+			expected: []lm4.GlobalFilter{{
+				Meta:  lm4.GlobalFilterMeta{Type: "phrase", Key: "a", Params: &lm4.FilterParams{Query: "b"}, IndexRefName: refName(0)},
+				Query: &lm4.GlobalFilterQuery{MatchPhrase: map[string]string{"a": "b"}},
+				State: map[string]string{"store": "appState"},
+			}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dashboard := &LM4Dashboard{
-				savedObject: objects.GetDefaultDashboardSavedObject(),
-				search:      objects.GetDefaultSearchObject(false),
-				id:          uuid.New().String(),
+				savedObject:      objects.GetDefaultDashboardSavedObject(),
+				search:           objects.GetDefaultSearchObject(false),
+				id:               uuid.New().String(),
+				currentRefNumber: tt.currentRefNumber,
 			}
 
 			got := dashboard.migrateFilters(tt.filter, "")
 
 			assert.Equal(t, tt.expected, got)
+			require.Len(t, dashboard.references, len(got))
+			for i, f := range got {
+				assert.Equal(t, f.Meta.IndexRefName, dashboard.references[i].Name)
+			}
 		})
 	}
 }

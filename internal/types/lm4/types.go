@@ -50,9 +50,10 @@ type Query struct {
 }
 
 type GlobalFilter struct {
-	Meta  GlobalFilterMeta  `json:"meta"`
-	Query GlobalFilterQuery `json:"query"`
-	State map[string]string `json:"$state"`
+	Meta   GlobalFilterMeta   `json:"meta"`
+	Query  *GlobalFilterQuery `json:"query,omitempty"`
+	Exists *ExistsFilter      `json:"exists,omitempty"`
+	State  map[string]string  `json:"$state"`
 }
 
 type GlobalFilterQuery struct {
@@ -60,16 +61,23 @@ type GlobalFilterQuery struct {
 	QueryString map[string]string `json:"query_string,omitempty"`
 }
 
+type ExistsFilter struct {
+	Field string `json:"field"`
+}
+
+type FilterParams struct {
+	Query string `json:"query"`
+}
+
 type GlobalFilterMeta struct {
-	Alias    interface{} `json:"alias"`
-	Negate   bool        `json:"negate"`
-	Disabled bool        `json:"disabled"`
-	Type     string      `json:"type"`
-	Key      string      `json:"key"`
-	Params   struct {
-		Query string `json:"query"`
-	} `json:"params,omitempty"`
-	IndexRefName string `json:"indexRefName"`
+	Alias        interface{}   `json:"alias"`
+	Negate       bool          `json:"negate"`
+	Disabled     bool          `json:"disabled"`
+	Type         string        `json:"type"`
+	Key          string        `json:"key"`
+	Params       *FilterParams `json:"params,omitempty"`
+	Value        string        `json:"value,omitempty"`
+	IndexRefName string        `json:"indexRefName"`
 }
 
 type PanelJSON struct {
