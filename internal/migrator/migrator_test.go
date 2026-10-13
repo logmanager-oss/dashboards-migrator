@@ -478,10 +478,19 @@ func TestMigrate(t *testing.T) {
 			name: "markdown text panel migrates with content and no references",
 			panels: []lm3.Panel{
 				{Type: "text", Mode: "markdown", Content: "# Hello", Title: "Notes", Span: 6},
+				{Type: "terms", Chart: "pie", Field: "msg.protocol", Size: 5, Title: "Pie", Span: 12},
 			},
 			verify: func(t *testing.T, output []lm4.SavedObject) {
-				require.Len(t, output, 2)
+				require.Len(t, output, 3)
 				assert.Empty(t, output[0].References)
+
+				// The text panel is sized by its one line, and the pie starts right below it.
+				var panels []lm4.PanelJSON
+				require.NoError(t, json.Unmarshal([]byte(output[2].Attributes.PanelsJSON), &panels))
+				require.Len(t, panels, 2)
+				assert.Equal(t, 4, panels[0].GridData.H)
+				assert.Equal(t, 4, panels[1].GridData.Y)
+				assert.Equal(t, objects.DefaultVisHeight, panels[1].GridData.H)
 
 				var visState lm4.VisState
 				require.NoError(t, json.Unmarshal([]byte(output[0].Attributes.VisState), &visState))

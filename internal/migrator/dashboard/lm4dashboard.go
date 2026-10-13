@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/logmanager-oss/dashboards-migrator/internal/migrator/visualization"
 	"github.com/logmanager-oss/dashboards-migrator/internal/objects"
@@ -18,6 +19,7 @@ type LM4Dashboard struct {
 	search              *lm4.SearchSourceJSON
 	Panels              []lm4.PanelJSON
 	currentRowHeight    int
+	currentLineHeight   int
 	currentGridPosition struct {
 		X int
 		Y int
@@ -57,7 +59,7 @@ func (dashboard *LM4Dashboard) MigrateDashboard(title string, filters []lm3.Glob
 }
 
 func (dashboard *LM4Dashboard) LinkVisualizationToDashboardObject(params *visualization.MigrationParams, visualizationType string) {
-	grid := dashboard.calculateGridPosition(params.Span)
+	grid := dashboard.calculateGridPosition(params.Span, dashboard.panelHeight(params))
 
 	panel := dashboard.buildPanelObject(
 		grid,
@@ -85,9 +87,31 @@ func (dashboard *LM4Dashboard) StartRow(height string) {
 	dashboard.currentRowHeight = rowHeight(height)
 }
 
+// newLine moves below the tallest panel on the current line.
 func (dashboard *LM4Dashboard) newLine() {
 	dashboard.currentGridPosition.X = 0
-	dashboard.currentGridPosition.Y += dashboard.currentRowHeight
+	dashboard.currentGridPosition.Y += dashboard.currentLineHeight
+	dashboard.currentLineHeight = 0
+}
+
+// panelHeight is the row height, except for markdown panels, which LM3 let grow with their text.
+func (dashboard *LM4Dashboard) panelHeight(params *visualization.MigrationParams) int {
+	if _, ok := params.VisualizationType.(*objects.Markdown); ok {
+		return markdownHeight(params.Content, params.Span)
+	}
+
+	return dashboard.currentRowHeight
+}
+
+// markdownHeight estimates the grid rows a text panel needs: one per rendered line, wrapped at the panel width, plus the title bar.
+func markdownHeight(content string, span int) int {
+	charsPerLine := span * objects.MarkdownCharsPerSpan
+	lines := 0
+	for _, line := range strings.Split(content, "\n") {
+		lines += max(1, (utf8.RuneCountInString(line)+charsPerLine-1)/charsPerLine)
+	}
+
+	return lines + objects.MarkdownPanelPadding
 }
 
 // rowHeight converts an LM3 row height such as "150px" to OSD grid rows.
@@ -100,7 +124,7 @@ func rowHeight(px string) int {
 	return max((n+objects.GridRowPx-1)/objects.GridRowPx, objects.MinVisHeight)
 }
 
-func (dashboard *LM4Dashboard) calculateGridPosition(span int) *lm4.GridData {
+func (dashboard *LM4Dashboard) calculateGridPosition(span int, height int) *lm4.GridData {
 	width := span * 4
 
 	if dashboard.currentGridPosition.X == objects.MaxRowWidth || dashboard.currentGridPosition.X+width > objects.MaxRowWidth {
@@ -113,8 +137,9 @@ func (dashboard *LM4Dashboard) calculateGridPosition(span int) *lm4.GridData {
 	}
 
 	gridData.W = width
-	gridData.H = dashboard.currentRowHeight
+	gridData.H = height
 	dashboard.currentGridPosition.X += gridData.W
+	dashboard.currentLineHeight = max(dashboard.currentLineHeight, height)
 
 	return gridData
 }
